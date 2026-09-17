@@ -8,8 +8,13 @@ import { type Grow, type Plant, type EntryType, generateId, calculateGrowDates }
 declare global {
     interface Window {
         twemoji: {
-            parse: (node: Node | string, options?: { folder?: string; ext?: string; base?: string }) => string | void;
+            parse: (node: Node | string, options?: {
+                folder?: string; ext?: string; base?: string;
+                callback?: (icon: string) => string | false;
+            }) => string | void;
         };
+        /** Emoji this site ships as SVG (public/emoji/list.js) */
+        GROW_EMOJI?: Set<string>;
         createMockGrow: () => void;
     }
 }
@@ -304,12 +309,16 @@ window.createMockGrow = createMockGrow;
  * Parse emojis in the DOM and replace with Twemoji images
  */
 function parseEmojis(): void {
-    if (window.twemoji) {
-        window.twemoji.parse(document.body, {
-            folder: 'svg',
-            ext: '.svg',
-        });
-    }
+    if (!window.twemoji) return;
+    window.twemoji.parse(document.body, {
+        // Served from this site (public/emoji, filled by scripts/bundle-emoji.mjs):
+        // no CDN request, no IP address leaving the device, and it works offline.
+        base: '/emoji/',
+        folder: 'svg',
+        ext: '.svg',
+        // Emoji a grower types into a note are not bundled — leave those to the system
+        callback: (icon: string) => (window.GROW_EMOJI?.has(icon) ? `/emoji/svg/${icon}.svg` : false),
+    });
 }
 
 // Initialize app when DOM is ready

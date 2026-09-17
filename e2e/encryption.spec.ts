@@ -37,7 +37,7 @@ async function attachFake(page: Page, server: Server) {
 
         if (p === '/auth/v1/token') return json(200, { access_token: 'at', refresh_token: 'rt', expires_in: 3600, user: USER });
         if (p === '/auth/v1/user') return json(200, USER);
-        if (p === '/rest/v1/app_flags') return json(200, [{ key: 'paid_tiers', enabled: false }]);
+        if (p === '/rest/v1/app_flags') return json(200, []);   // no switches set → defaults
         if (p === '/rest/v1/rpc/my_entitlement') {
             return json(200, [{
                 plan_id: 'free', plan_name: 'Free · sync included', sync_enabled: true, photo_quota_mb: 500,

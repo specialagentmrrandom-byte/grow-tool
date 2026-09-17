@@ -322,7 +322,7 @@ export class TentPlanner {
 
         return `
             <div class="tent-pot" 
-                 data-plant-id="${plant.id}"
+                 data-plant-id="${this.escapeHtml(plant.id)}"
                  style="
                      left: ${position.x}%;
                      top: ${position.y}%;
@@ -331,9 +331,16 @@ export class TentPlanner {
                      background: ${color};
                  ">
                 <span class="pot-number">#${plant.potNumber}</span>
-                <span class="pot-name">${plant.name}</span>
+                <span class="pot-name">${this.escapeHtml(plant.name)}</span>
                 <span class="pot-size">${potLiters}L</span>
             </div>
         `;
+    }
+
+    /** Plant names and ids are user input — never drop them into HTML raw. */
+    private escapeHtml(str: string): string {
+        const div = document.createElement('div');
+        div.textContent = str ?? '';
+        return div.innerHTML;
     }
 }

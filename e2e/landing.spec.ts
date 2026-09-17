@@ -6,18 +6,32 @@ test.describe('Landing page', () => {
         await page.goto('/');
     });
 
-    test('shows the brand, hero headline and all eight features', async ({ page }) => {
+    test('shows the brand, hero headline and all nine features', async ({ page }) => {
         await expect(page.locator('.nav-logo')).toContainText('OG Grow Journal');
         await expect(page.locator('.hero h1')).toBeVisible();
 
-        await expect(page.locator('.feature')).toHaveCount(8);
+        await expect(page.locator('.feature')).toHaveCount(9);
         const titles = await page.locator('.feature h3').allTextContents();
         for (const feature of [
             'Grow diary', 'Visual timeline', 'DLI light planning', 'Smart reminders',
             'Tent planner', 'Photo gallery', 'Reports & export', 'Works everywhere',
+            'Optional sync',
         ]) {
             expect(titles).toContain(feature);
         }
+    });
+
+    test('the sync section says it is optional and end-to-end encrypted', async ({ page }) => {
+        const section = page.locator('#sync');
+        await expect(section).toContainText('Off by default');
+        await expect(section).toContainText('Optional:');
+        await expect(section).toContainText('End-to-end encrypted');
+        await expect(section).toContainText('We cannot read it');
+        await expect(section).toContainText('Servers in the EU');
+        await expect(section).toContainText('recovery key');
+        // the hero makes the same promise before anyone scrolls
+        await expect(page.locator('.hero-trust')).toContainText('No account needed');
+        await expect(page.locator('.hero-trust')).toContainText('Optional end-to-end encrypted sync');
     });
 
     test('the primary hero CTA links into the app', async ({ page }) => {

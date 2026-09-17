@@ -1,9 +1,9 @@
 import { auth, AuthError } from '../sync/auth';
-import { syncEngine, canUseSync, daysLeft, type SyncState } from '../sync/engine';
-import { SyncHttpError, type Entitlement, type PlanOption } from '../sync/api';
-import { describeDays, formatGrowKey, keyCharacters, normalizeGrowKey, redeemErrorMessage, type RedeemResult } from '../sync/keys';
+import { syncEngine, canUseSync, type SyncState } from '../sync/engine';
+import { SyncHttpError } from '../sync/api';
 import { CryptoError } from '../sync/crypto';
 import { syncApi } from '../sync/api';
+import { PremiumPanel } from '../premium';
 import { captchaEnabled, getCaptchaToken } from '../sync/captcha';
 import { showError, showSuccess } from '../toast';
 
@@ -23,18 +23,21 @@ export class AccountModal {
     private showResend = false;
     private busy = false;
     private open = false;
-    private userId: string | null = null;
-    /** 🎟️ Grow Key / payment claim box in the account view */
-    private perkMode: 'key' | 'claim' = 'key';
-    private perkNotice: { kind: 'info' | 'error'; text: string } | null = null;
-    private clearPerkInput = false;
+    /** Optional add-on layer for the account screen (absent in the public build) */
+    private premium: PremiumPanel;
     /** 🔐 how the user wants to open an encrypted cloud copy on this device */
     private unlockMode: 'password' | 'recovery' | 'fresh' = 'password';
 
     constructor(container: HTMLElement) {
         this.container = container;
+        this.premium = new PremiumPanel({
+            container,
+            escapeHtml: value => this.escapeHtml(value),
+            isBusy: () => this.busy,
+            withBusy: run => this.withBusy(run),
+            rerender: () => this.render(),
+        });
         this.setupEvents();
-        auth.onChange(session => { this.userId = session?.userId ?? null; });
         syncEngine.onState(() => {
             if (this.open && this.container.querySelector('.account-modal')) this.render();
         });
@@ -52,16 +55,14 @@ export class AccountModal {
             const action = target.closest<HTMLElement>('[data-account-action]')?.dataset.accountAction;
             if (!action) return;
             e.preventDefault();
-            void this.handleAction(action);
+            void this.premium.handleAction(action).then(handled => {
+                if (!handled) void this.handleAction(action);
+            });
         });
 
-        // GROW-XXXX-XXXX-XXXX formatting while typing (only when typing at the end, so the caret doesn't jump)
         this.container.addEventListener('input', (e) => {
             const input = e.target as HTMLInputElement;
-            if (input.name !== 'grow-key' || !input.closest('.account-modal')) return;
-            if (input.selectionStart !== input.value.length) return;
-            const pretty = formatGrowKey(input.value);
-            if (pretty !== input.value && keyCharacters(input.value).length > 0) input.value = pretty;
+            if (input.closest('.account-modal')) this.premium.formatKeyInput(input);
         });
 
         this.container.addEventListener('submit', (e) => {
@@ -76,7 +77,6 @@ export class AccountModal {
     async show(view?: View): Promise<void> {
         this.open = true;
         const session = await auth.getSession();
-        this.userId = session?.userId ?? null;
         this.view = view ?? (session ? 'account' : 'sign-in');
         this.notice = null;
         this.showResend = false;
@@ -145,13 +145,6 @@ export class AccountModal {
                     this.switchView('sign-in');
                 });
             }
-            case 'perk-key':
-            case 'perk-claim':
-                this.perkMode = action === 'perk-key' ? 'key' : 'claim';
-                this.perkNotice = null;
-                this.render();
-                this.container.querySelector<HTMLInputElement>('.account-perk input')?.focus();
-                return;
             case 'consent': {
                 const box = this.container.querySelector<HTMLInputElement>('#account-consent');
                 if (!box?.checked) {
@@ -177,7 +170,7 @@ export class AccountModal {
     }
 
     private async handleSubmit(form: HTMLFormElement): Promise<void> {
-        if (form.dataset.accountForm === 'perk') return this.handlePerk(form);
+        if (await this.premium.handleSubmit(form)) return;
         if (form.dataset.accountForm === 'unlock') return this.handleUnlock(form);
         const data = new FormData(form);
         const email = String(data.get('email') ?? '').trim();
@@ -235,8 +228,17 @@ export class AccountModal {
             if (e instanceof CryptoError) {
                 this.notice = { kind: 'error', text: e.message };
                 this.unlockMode = e.code === 'wrong_password' ? 'recovery' : this.unlockMode;
+            } else if (e instanceof SyncHttpError && e.status === 0) {
+                this.notice = { kind: 'error', text: "📴 You're offline — connect to the internet and try again." };
+            } else if (e instanceof SyncHttpError && e.status === 401) {
+                this.notice = { kind: 'error', text: 'Your session expired. Please sign in again.' };
+            } else if (e instanceof SyncHttpError && (e.status === 404 || e.message.includes('PGRST205'))) {
+                // The encryption tables are missing — the server has not run the latest migration
+                this.notice = { kind: 'error', text: 'Sync is not ready on the server yet. Please try again later.' };
+                console.error('user_keys is missing — run the migration "e2e_encryption_retention" in Supabase', e);
             } else {
                 this.notice = { kind: 'error', text: 'The cloud copy could not be opened. Please try again.' };
+                console.error('Unlock failed:', e);
             }
         }
     }
@@ -269,53 +271,6 @@ export class AccountModal {
         });
     }
 
-    /** Redeem a Grow Key or claim a supporter payment. */
-    private async handlePerk(form: HTMLFormElement): Promise<void> {
-        const data = new FormData(form);
-        const { grow_keys: keysOn, supporter_claims: claimsOn } = this.flags();
-        const mode: 'key' | 'claim' = keysOn && (this.perkMode === 'key' || !claimsOn) ? 'key' : 'claim';
-        if ((mode === 'key' && !keysOn) || (mode === 'claim' && !claimsOn)) return;
-        const value = String(data.get(mode === 'key' ? 'grow-key' : 'reference') ?? '').trim();
-
-        if (mode === 'key' && !normalizeGrowKey(value)) {
-            this.perkNotice = { kind: 'error', text: 'A Grow Key has 12 characters, like GROW-7K2F-M9QX-4HTP.' };
-            return this.render();
-        }
-        if (mode === 'claim' && value.length < 6) {
-            this.perkNotice = { kind: 'error', text: 'Paste the transaction ID from your Ko-fi or Buy Me a Coffee receipt.' };
-            return this.render();
-        }
-
-        if (this.busy) return;
-        this.busy = true;
-        this.perkNotice = null;
-        this.render();
-        try {
-            const result: RedeemResult = mode === 'key'
-                ? await syncEngine.redeemKey(normalizeGrowKey(value)!)
-                : await syncEngine.claimPayment(value);
-            if (result.ok) {
-                const until = new Date(result.paid_until).toLocaleDateString();
-                const added = `+${describeDays(result.days)} of ${result.plan_name}`;
-                showSuccess(mode === 'key' ? '🎟️ Key redeemed' : '💚 Thanks for your support', `${added} — active until ${until}.`);
-                this.perkNotice = { kind: 'info', text: `✨ ${added} added. Active until ${until}.` };
-                this.clearPerkInput = true;
-            } else {
-                this.perkNotice = { kind: 'error', text: redeemErrorMessage(result.error) };
-            }
-        } catch (e) {
-            this.perkNotice = {
-                kind: 'error',
-                text: e instanceof SyncHttpError && e.status === 0
-                    ? "📴 You're offline — connect to the internet and try again."
-                    : 'Something went wrong. Please try again.',
-            };
-        } finally {
-            this.busy = false;
-            if (this.open && this.container.querySelector('.account-modal')) this.render();
-        }
-    }
-
     private async withBusy(fn: () => Promise<void>): Promise<void> {
         if (this.busy) return;
         this.busy = true;
@@ -338,11 +293,9 @@ export class AccountModal {
         // Sync status updates re-render the modal — keep whatever is typed into
         // the key / claim / unlock fields instead of wiping it mid-sentence
         const typed = this.container.querySelector<HTMLInputElement>('.account-perk input, .account-unlock input');
-        const kept = typed && !this.clearPerkInput
+        const kept = typed && !this.premium.takeClearInput()
             ? { name: typed.name, value: typed.value, focused: document.activeElement === typed }
             : null;
-
-        this.clearPerkInput = false;
 
         const body = this.view === 'account' ? this.renderAccount(syncEngine.getState()) : this.renderAuthForm();
         this.container.innerHTML = `
@@ -406,9 +359,7 @@ export class AccountModal {
             ? '<p><strong>Create your free account.</strong> It takes a few seconds and costs nothing. Plans with sync across devices can be added to it any time.</p>'
             : '<p><strong>Sign in to your account.</strong> Plans with sync keep your grows and photos on phone, tablet and computer.</p>'}
         <p class="form-hint">No account needed for the app itself — everything keeps working offline on this device.</p>
-        ${this.flags().grow_keys || this.flags().supporter_claims
-            ? '<p class="form-hint">🎟️ Got a Grow Key or supported us on Ko-fi / Buy Me a Coffee? Sign in or create a free account — you can add it right after.</p>'
-            : ''}
+        ${this.premium.renderSignInHint()}
       </div>
       <form class="account-form" novalidate>
         <div class="form-group">
@@ -454,7 +405,7 @@ export class AccountModal {
         <div class="account-row"><span class="account-label">Plan</span>
           <span class="account-badge ${hasSync && ent?.status !== 'free' ? 'premium' : ''}">${ent ? `${hasSync && ent.status !== 'free' ? '✨' : '🌱'} ${this.escapeHtml(ent.plan_name)}` : '…'}</span>
         </div>
-        ${ent ? this.planStatusRows(ent) : ''}
+        ${ent ? this.premium.renderPlanStatus(ent) : ''}
       </div>`;
 
         let main = '';
@@ -463,8 +414,8 @@ export class AccountModal {
         } else if (!ent) {
             main = `<p class="form-hint">${state.status === 'offline' ? '📴 Offline — your plan will show when you reconnect.' : 'Loading your plan…'}</p>`;
         } else if (!hasSync) {
-            main = this.renderPlanOptions(state.plans, ent);
-        } else if (!this.flags().paid_tiers && !ent.sync_consent_at) {
+            main = this.premium.renderPlanOptions(state.plans, ent);
+        } else if (!this.premium.tiersActive() && !ent.sync_consent_at) {
             main = `
         <div class="settings-section">
           <h4>🎁 Sync is free for everyone right now</h4>
@@ -505,7 +456,7 @@ export class AccountModal {
       ${this.renderRecoveryKey(state)}
       ${header}
       ${main}
-      ${ent ? this.renderPerk() : ''}
+      ${ent ? this.premium.renderPerk() : ''}
       <div class="settings-section account-footer">
         <div class="btn-group">
           <button class="btn-secondary" data-account-action="sign-out">Sign out</button>
@@ -514,10 +465,6 @@ export class AccountModal {
         <button class="link-btn account-danger" data-account-action="delete-account" ${disabled}>Delete my account permanently</button>
         <p class="form-hint">Your diary stays on this device — only the account and its cloud copy go.</p>
       </div>`;
-    }
-
-    private flags() {
-        return syncEngine.getState().flags;
     }
 
     /** Shown once, right after the key was made: the only way back into the cloud copy. */
@@ -571,131 +518,6 @@ export class AccountModal {
           ${mode !== 'fresh' ? '<button class="link-btn account-danger" data-account-action="unlock-fresh">I have neither</button>' : ''}
         </div>
       </div>`;
-    }
-
-    /** 🎟️ Redeem a Grow Key, or claim a supporter payment made with another email. */
-    private renderPerk(): string {
-        const { grow_keys: keysOn, supporter_claims: claimsOn } = this.flags();
-        if (!keysOn && !claimsOn) return '';           // both switched off in public.app_flags
-        const disabled = this.busy ? 'disabled' : '';
-        const isKey = keysOn && (this.perkMode === 'key' || !claimsOn);
-        const notice = this.perkNotice
-            ? `<p class="account-notice ${this.perkNotice.kind}" role="${this.perkNotice.kind === 'error' ? 'alert' : 'status'}">${this.escapeHtml(this.perkNotice.text)}</p>`
-            : '';
-        const field = isKey
-            ? `<div class="form-group">
-            <label for="account-grow-key">Grow Key</label>
-            <input id="account-grow-key" name="grow-key" type="text" inputmode="text" autocomplete="off" autocapitalize="characters"
-                   spellcheck="false" maxlength="24" placeholder="GROW-XXXX-XXXX-XXXX" class="account-key-input">
-          </div>`
-            : `<div class="form-group">
-            <label for="account-reference">Transaction ID</label>
-            <input id="account-reference" name="reference" type="text" autocomplete="off" spellcheck="false" maxlength="120"
-                   placeholder="from your Ko-fi or Buy Me a Coffee receipt">
-            <span class="form-hint">Only needed if you paid with a different email than <strong>${this.escapeHtml(syncEngine.getState().email ?? 'this account')}</strong> — payments with this email are added automatically.</span>
-          </div>`;
-        return `
-      <div class="settings-section account-perk">
-        <h4>${isKey ? '🎟️ Redeem a Grow Key' : '💚 Add a supporter payment'}</h4>
-        <form class="account-form" data-account-form="perk" novalidate>
-          ${field}
-          ${notice}
-          <button type="submit" class="btn-secondary account-submit" ${disabled}>
-            ${this.busy ? 'One moment…' : isKey ? '🎟️ Redeem key' : '💚 Add payment'}
-          </button>
-        </form>
-        ${keysOn && claimsOn ? `<button type="button" class="link-btn" data-account-action="${isKey ? 'perk-claim' : 'perk-key'}">
-          ${isKey ? 'Supported on Ko-fi or Buy Me a Coffee with another email?' : '← I have a Grow Key instead'}
-        </button>` : ''}
-      </div>`;
-    }
-
-    /** Status lines under the plan, straight from the server's subscription data. */
-    private planStatusRows(ent: Entitlement): string {
-        const date = ent.current_period_end ? new Date(ent.current_period_end).toLocaleDateString() : null;
-        const left = daysLeft(ent);
-        const row = (label: string, value: string) =>
-            `<div class="account-row"><span class="account-label">${label}</span><span>${value}</span></div>`;
-
-        switch (ent.status) {
-            case 'free':
-                // free + sync = the paid tiers are switched off for everyone right now
-                return row('Status', ent.sync_enabled ? 'Sync included, no plan needed' : 'Free account');
-            case 'trialing':
-                return row('Status', date ? `Trial until ${date}` : 'Trial');
-            case 'active':
-                if (!date) return row('Status', 'Active');
-                // Time from Grow Keys and supporter payments doesn't renew by itself
-                if (ent.provider === 'credit') {
-                    return `${row('Active until', date)}${left !== null && left <= 7
-                        ? `<p class="account-notice">⏳ ${left <= 0 ? 'Your time runs out today' : `${left} day${left === 1 ? '' : 's'} left`} — redeem a key or support again to keep syncing.</p>`
-                        : ''}`;
-                }
-                return row(ent.cancel_at_period_end ? 'Ends on' : 'Renews on', date);
-            case 'past_due':
-                return `${row('Status', '⚠️ Payment overdue')}
-          <p class="account-notice error">Your last payment didn't go through. Sync keeps working for a few days — please update your payment method${left !== null && left < 0 ? ' now' : ''}.</p>`;
-            case 'canceled':
-                return row('Ends on', date ?? '—');
-            default:
-                return row('Status', this.escapeHtml(ent.status));
-        }
-    }
-
-    /** Upgrade options from public.plans — adding a plan row in the database adds a card here. */
-    private renderPlanOptions(plans: PlanOption[], ent: Entitlement): string {
-        if (!this.flags().plans) {
-            return `
-        <div class="settings-section">
-          <h4>☁️ Sync across devices</h4>
-          <p class="form-hint">Sync isn't open to new accounts at the moment. Your diary keeps working on this device.</p>
-        </div>`;
-        }
-        const upgrades = plans.filter(p => p.sync_enabled && p.id !== ent.plan_id);
-        if (upgrades.length === 0) {
-            return `
-        <div class="settings-section">
-          <h4>✨ Sync across devices</h4>
-          <p class="form-hint">Plans with sync are coming soon — your free account is ready for them.</p>
-        </div>`;
-        }
-        const cards = upgrades.map(p => {
-            const href = p.checkout_url ? this.checkoutLink(p.checkout_url) : null;
-            return `
-          <div class="plan-card">
-            <div class="plan-card-head">
-              <strong>✨ ${this.escapeHtml(p.name)}</strong>
-              ${p.price_label ? `<span class="plan-price">${this.escapeHtml(p.price_label)}</span>` : ''}
-            </div>
-            ${p.description ? `<p class="plan-desc">${this.escapeHtml(p.description)}</p>` : ''}
-            <ul class="account-benefits">
-              <li>📱 Your grows on every device, always up to date</li>
-              <li>📷 Photos included (compressed, up to ${p.photo_quota_mb >= 1000 ? `${Math.round(p.photo_quota_mb / 100) / 10} GB` : `${p.photo_quota_mb} MB`})</li>
-              <li>🛟 Automatic backup if a phone gets lost</li>
-            </ul>
-            ${href
-                ? `<a class="btn-primary account-cta" href="${this.escapeHtml(href)}" target="_blank" rel="noopener">Choose ${this.escapeHtml(p.name)}</a>`
-                : '<p class="form-hint">Available soon.</p>'}
-          </div>`;
-        }).join('');
-        return `
-      <div class="settings-section">
-        <h4>✨ Upgrade to sync across devices</h4>
-        <div class="plan-list">${cards}</div>
-        <p class="form-hint">💚 Supporting on Ko-fi or Buy Me a Coffee with <strong>${this.escapeHtml(syncEngine.getState().email ?? 'your account email')}</strong> adds the time automatically.</p>
-        <p class="form-hint">Already paid? Activation can take a moment. <button class="link-btn" data-account-action="sync-now">Check again</button></p>
-      </div>`;
-    }
-
-    /**
-     * Checkout links may contain {email} and {user_id}; the payment provider passes
-     * them back to the webhook so the payment lands on the right account.
-     */
-    private checkoutLink(template: string): string {
-        const email = syncEngine.getState().email ?? '';
-        return template
-            .replace(/\{email\}/g, encodeURIComponent(email))
-            .replace(/\{user_id\}/g, encodeURIComponent(this.userId ?? ''));
     }
 
     private statusText(state: SyncState): string {

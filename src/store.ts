@@ -15,6 +15,7 @@ import {
 } from './types';
 import { getPhase, getDaysSinceSprout } from './dli';
 import { photoStore } from './photoStore';
+import { sanitizeImport } from './importGuard';
 
 const STORAGE_KEY = 'grow-tool-data';
 const MAX_LOCALSTORAGE_MB = 5;      // localStorage limit (metadata only now)
@@ -626,26 +627,35 @@ class Store {
         return JSON.stringify(exportData, null, 2);
     }
 
+    /**
+     * Import a backup file. The file may come from anywhere, so it is rebuilt
+     * field by field (src/importGuard.ts) instead of trusted: unknown keys are
+     * dropped, values must have the right type, and photos must be image data
+     * URLs. Returns false when the file is not a backup at all.
+     */
     importJSON(json: string): boolean {
+        return this.importWithReport(json).ok;
+    }
+
+    /** Same as importJSON, plus what had to be dropped or repaired. */
+    importWithReport(json: string): { ok: boolean; warnings: string[] } {
+        let raw: unknown;
         try {
-            const imported = JSON.parse(json) as StoreData;
-
-            // Validate basic structure
-            if (!imported.grows || !Array.isArray(imported.grows)) {
-                throw new Error('Invalid data structure');
-            }
-
-            this.data = {
-                ...DEFAULT_STORE_DATA,
-                ...imported,
-                settings: { ...DEFAULT_STORE_DATA.settings, ...imported.settings },
-            };
-
-            return this.save();
-        } catch (e) {
-            console.error('Failed to import JSON:', e);
-            return false;
+            raw = JSON.parse(json);
+        } catch {
+            console.error('Failed to import JSON: not valid JSON');
+            return { ok: false, warnings: ['this file is not valid JSON'] };
         }
+
+        const { data, warnings } = sanitizeImport(raw, DEFAULT_STORE_DATA);
+        if (!data) {
+            console.error('Failed to import JSON: not a grow diary backup');
+            return { ok: false, warnings };
+        }
+        if (warnings.length > 0) console.warn('Import warnings:', warnings);
+
+        this.data = data;
+        return { ok: this.save(), warnings };
     }
 
     // Export grow as Markdown for forum posting

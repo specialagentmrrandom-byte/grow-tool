@@ -5943,7 +5943,7 @@ body.grow-popup-open {
     line-height: 1.5;
 }
 
-/* 🎟️ Grow Key / supporter payment box */
+/* 🎟️ The add-on box on the account screen (code / reference form) */
 .account-perk .account-form {
     margin-bottom: var(--space-xs);
 }

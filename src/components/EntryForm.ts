@@ -210,7 +210,7 @@ export class EntryForm {
                   type="text"
                   id="entry-title"
                   name="title"
-                  value="${entry?.title ?? ''}"
+                  value="${this.escapeHtml(entry?.title ?? '')}"
                   placeholder="${isFuture ? 'Describe what to do' : 'Describe what happened'}"
                   required
                 >
@@ -264,7 +264,7 @@ export class EntryForm {
                   name="content" 
                   rows="3"
                   placeholder="${isFuture ? 'Add details about this task' : 'Add observations, measurements, or details'}"
-                >${entry?.content ?? ''}</textarea>
+                >${this.escapeHtml(entry?.content ?? '')}</textarea>
               </div>
               
               ${!isFuture || (entry && entry.type !== 'reminder') ? `

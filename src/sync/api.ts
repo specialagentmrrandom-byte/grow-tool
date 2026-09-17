@@ -6,7 +6,7 @@ import { syncConfig } from './config';
 import { auth } from './auth';
 import type { RemoteGrowRow, GrowTombstone } from './merge';
 import type { Ciphertext, KeyRecord } from './crypto';
-import { parseFlags, type AppFlags, type RedeemResult } from './keys';
+import { parseFlags, type AppFlags } from './flags';
 
 export class SyncHttpError extends Error {
     constructor(message: string, public readonly status: number) {
@@ -14,27 +14,27 @@ export class SyncHttpError extends Error {
     }
 }
 
-export type SubscriptionStatus =
+export type PlanStatus =
     | 'pending' | 'trialing' | 'active' | 'past_due' | 'canceled' | 'expired' | 'refunded' | 'paused';
 
 /**
  * What the signed-in user may do right now — computed by the server
- * (public.my_entitlement) from their subscriptions. `status` is 'free' when no
- * paid subscription currently grants access.
+ * (public.my_entitlement). `status` is 'free' when nothing extra is in force
+ * and the account is on the plan everyone gets.
  */
 export interface Entitlement {
     plan_id: string;
     plan_name: string;
     sync_enabled: boolean;
     photo_quota_mb: number;
-    status: SubscriptionStatus | 'free';
+    status: PlanStatus | 'free';
     current_period_end: string | null;
     cancel_at_period_end: boolean;
     provider: string | null;
     sync_consent_at: string | null;
 }
 
-/** A tier option from public.plans. */
+/** One row of public.plans — what an account can be on. */
 export interface PlanOption {
     id: string;
     name: string;
@@ -57,6 +57,10 @@ export interface RemotePhoto {
 
 const PHOTO_BUCKET = 'photos';
 
+/**
+ * One authenticated REST call against the project. Exported as `restCall` so the
+ * optional premium layer can use the same token handling and error shapes.
+ */
 async function call(path: string, init: RequestInit & { headers?: Record<string, string> } = {}): Promise<Response> {
     const token = await auth.getAccessToken();
     if (!token) throw new SyncHttpError('Not signed in', 401);
@@ -80,7 +84,9 @@ async function call(path: string, init: RequestInit & { headers?: Record<string,
     return response;
 }
 
-const json = { 'Content-Type': 'application/json' };
+export { call as restCall };
+
+export const json = { 'Content-Type': 'application/json' };
 
 export const syncApi = {
     async getEntitlement(): Promise<Entitlement | null> {
@@ -89,10 +95,6 @@ export const syncApi = {
         return rows[0] ?? null;
     },
 
-    /**
-     * Feature flags (public.app_flags) — readable without a login, so the app knows
-     * what to show before anyone signs in. Any failure keeps the defaults.
-     */
     /** The wrapped key material of the signed-in user (null on a brand new account). */
     async getKeyRecord(): Promise<KeyRecord | null> {
         const res = await call('/rest/v1/user_keys?select=version,kdf_iterations,salt,wrapped_password,recovery_salt,wrapped_recovery');
@@ -125,24 +127,16 @@ export const syncApi = {
         if (!res.ok) throw new SyncHttpError(await res.text().catch(() => '') || res.statusText, res.status);
     },
 
+    /**
+     * The switches in public.app_flags — readable without a login, so the app
+     * knows what to show before anyone signs in.
+     */
     async getFlags(): Promise<AppFlags> {
         const res = await fetch(`${syncConfig.url}/rest/v1/app_flags?select=key,enabled`, {
             headers: { apikey: syncConfig.publishableKey },
         });
         if (!res.ok) throw new SyncHttpError(await res.text().catch(() => '') || res.statusText, res.status);
         return parseFlags(await res.json());
-    },
-
-    /** 🎟️ Redeem a Grow Key → days on a plan (errors come back as {ok:false, error}). */
-    async redeemGrowKey(code: string): Promise<RedeemResult> {
-        const res = await call('/rest/v1/rpc/redeem_grow_key', { method: 'POST', headers: json, body: JSON.stringify({ p_code: code }) });
-        return res.json();
-    },
-
-    /** Add a Ko-fi / Buy Me a Coffee payment made with another email, by its transaction id. */
-    async claimSupporterPayment(reference: string): Promise<RedeemResult> {
-        const res = await call('/rest/v1/rpc/claim_supporter_payment', { method: 'POST', headers: json, body: JSON.stringify({ p_reference: reference }) });
-        return res.json();
     },
 
     async getPlans(): Promise<PlanOption[]> {

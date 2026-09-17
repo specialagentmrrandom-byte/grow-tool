@@ -11,15 +11,16 @@ import { photoStore } from '../photoStore';
 import { auth } from './auth';
 import { dataKeyStore } from './session';
 import {
-    createKeyRecord, decryptBlob, decryptJson, encryptBlob, encryptJson, isCiphertext,
+    createKeyRecord, decryptBlob, encryptBlob,
     rewrapForPassword, replaceRecoveryKey, unlockWithPassword, unlockWithRecoveryKey,
 } from './crypto';
+import { hasPlaintext, openRows, openSettings, sealRow, sealSettings } from './payload';
 import { isSyncConfigured } from './config';
 import { syncApi, SyncHttpError, type Entitlement, type PlanOption } from './api';
-import { mergeAll, stableStringify, type GrowTombstone, type RemoteGrowRow } from './merge';
+import { mergeAll, stableStringify, type GrowTombstone } from './merge';
 import type { Grow } from '../types';
 import { compressForSync } from './compress';
-import { DEFAULT_FLAGS, type AppFlags, type RedeemResult } from './keys';
+import { DEFAULT_FLAGS, type AppFlags } from './flags';
 
 export type SyncStatus =
     | 'disabled'       // not configured in this build
@@ -35,6 +36,7 @@ export type SyncStatus =
 export interface SyncState {
     status: SyncStatus;
     email: string | null;
+    userId: string | null;
     entitlement: Entitlement | null;
     plans: PlanOption[];
     /** What is switched on server-side (public.app_flags) */
@@ -69,6 +71,7 @@ class SyncEngine {
     private state: SyncState = {
         status: isSyncConfigured() ? 'signed-out' : 'disabled',
         email: null,
+        userId: null,
         entitlement: null,
         plans: [],
         flags: DEFAULT_FLAGS,
@@ -117,11 +120,11 @@ class SyncEngine {
             if (!this.applying) this.schedule();
         });
         auth.onChange(session => {
-            this.set({ email: session?.email ?? null });
+            this.set({ email: session?.email ?? null, userId: session?.userId ?? null });
             if (session) void this.syncNow();
             else {
                 this.dataKey = null;
-                this.set({ status: 'signed-out', entitlement: null, plans: [], error: null, recoveryKey: null });
+                this.set({ status: 'signed-out', entitlement: null, plans: [], error: null, recoveryKey: null, userId: null });
             }
         });
         window.addEventListener('online', () => void this.syncNow());
@@ -136,7 +139,7 @@ class SyncEngine {
 
         void (async () => {
             const session = await auth.getSession();
-            this.set({ email: session?.email ?? null });
+            this.set({ email: session?.email ?? null, userId: session?.userId ?? null });
             if (session) await this.syncNow();
         })();
     }
@@ -248,20 +251,6 @@ class SyncEngine {
         }
     }
 
-    /** Redeem a Grow Key; on success the new plan time is loaded right away. */
-    async redeemKey(code: string): Promise<RedeemResult> {
-        const result = await syncApi.redeemGrowKey(code);
-        if (result.ok) await this.syncNow();
-        return result;
-    }
-
-    /** Claim a supporter payment by transaction id; on success the new plan time is loaded right away. */
-    async claimPayment(reference: string): Promise<RedeemResult> {
-        const result = await syncApi.claimSupporterPayment(reference);
-        if (result.ok) await this.syncNow();
-        return result;
-    }
-
     async deleteSyncedData(): Promise<void> {
         const session = await auth.getSession();
         if (!session) return;
@@ -324,18 +313,10 @@ class SyncEngine {
             this.set({ status: 'syncing', entitlement, error: null });
 
             const [rawRows, rawSettings] = await Promise.all([syncApi.getGrows(), syncApi.getSettingsRow()]);
-            const rows = await Promise.all(rawRows.map(async row => ({
-                ...row,
-                data: isCiphertext(row.data) ? await decryptJson<RemoteGrowRow['data']>(row.data, dataKey) : row.data,
-            })));
-            const remoteStrains = rawSettings === null
-                ? null
-                : (isCiphertext(rawSettings)
-                    ? (await decryptJson<{ strains?: string[] }>(rawSettings, dataKey)).strains ?? []
-                    : rawSettings.strains ?? []);
-            // Anything still in the clear was written before encryption — rewrite it
-            const plaintextLeft = rawRows.some(r => r.data !== null && !isCiphertext(r.data))
-                || (rawSettings !== null && !isCiphertext(rawSettings));
+            const rows = await openRows(rawRows, dataKey);
+            const remoteStrains = await openSettings(rawSettings, dataKey);
+            // Anything still in the clear was written before encryption — rewrite it sealed
+            const plaintextLeft = hasPlaintext(rawRows, rawSettings);
 
             const local = store.getSyncSnapshot();
             const result = mergeAll(local, rows, remoteStrains ?? []);
@@ -381,11 +362,11 @@ class SyncEngine {
                 : result.push;
             await syncApi.upsertGrows(session.userId, await Promise.all(push.map(async row => ({
                 ...row,
-                data: await encryptJson(row.data, dataKey),
+                data: await sealRow(row.data, dataKey),
             }))));
             if (plaintextLeft || remoteStrains === null
                 || stableStringify([...remoteStrains].sort()) !== stableStringify([...result.local.strains].sort())) {
-                await syncApi.putStrains(session.userId, await encryptJson({ strains: result.local.strains }, dataKey));
+                await syncApi.putStrains(session.userId, await sealSettings({ strains: result.local.strains }, dataKey));
             }
 
             const downloaded = await this.downloadMissing(session.userId, referenced, localIds, encryptedIds, dataKey);
