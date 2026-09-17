@@ -1,7 +1,10 @@
 import { type Grow, type Entry, type EntryType, getGrowColor } from './types';
 import { store } from './store';
 import { Timeline } from './timeline';
-import { Dashboard, GrowForm, EntryForm, ExportModal, GalleryModal, DLICalculatorModal, TentLayoutModal, ReminderBar, QuickLogSheet } from './components/index';
+import { Dashboard, GrowForm, EntryForm, ExportModal, GalleryModal, DLICalculatorModal, TentLayoutModal, ReminderBar, QuickLogSheet, AccountModal } from './components/index';
+import { isSyncConfigured } from './sync/config';
+import { auth } from './sync/auth';
+import { syncEngine } from './sync/engine';
 import { getPhaseInfo, getDLITarget, formatPhase } from './dli';
 import { iconSvg, LOG_TYPE_META, type LogType } from './icons';
 import { PHASE_COLORS } from './types';
@@ -27,6 +30,7 @@ export class App {
     private dliCalculatorModal: DLICalculatorModal | null = null;
     private reminderBar: ReminderBar | null = null;
     private quickLogSheet: QuickLogSheet | null = null;
+    private accountModal: AccountModal | null = null;
 
     // Event listener cleanup
     private growViewCleanup: (() => void) | null = null;
@@ -61,11 +65,50 @@ export class App {
         // Set up theme watcher for cross-tab sync
         this.setupThemeWatcher();
 
+        // Premium cross-device sync (no-op when not configured in this build)
+        this.setupSync();
+
         // Handle browser navigation
         window.addEventListener('popstate', () => this.handleRoute());
 
         // Initial route
         this.handleRoute();
+    }
+
+    private setupSync(): void {
+        if (!isSyncConfigured()) return;
+
+        // Links from confirmation / password-reset emails land here with tokens in the hash
+        if (window.location.hash.includes('access_token=') || window.location.hash.includes('error_description=')) {
+            auth.consumeRedirect()
+                .then(type => {
+                    if (type === 'recovery') void this.accountModal?.show('new-password');
+                    else if (type) {
+                        showSuccess('Email confirmed', 'You are signed in.');
+                        void this.accountModal?.show('account');
+                    }
+                })
+                .catch(e => showError('Sign-in link', e instanceof Error ? e.message : 'This link did not work.'));
+        }
+
+        // Changes from another device: refresh what's on screen without closing open forms
+        syncEngine.onRemoteData(() => {
+            if (this.currentGrow) {
+                const grow = store.getGrow(this.currentGrow.id);
+                if (!grow) {
+                    showWarning('Grow removed', 'This grow was deleted on another device.');
+                    this.showDashboard();
+                    return;
+                }
+                this.currentGrow = grow;
+                this.timeline?.render(grow);
+            } else {
+                this.dashboard?.render();
+            }
+            this.renderReminders();
+        });
+
+        syncEngine.start();
     }
 
     private setupReminderChecking(): void {
@@ -153,7 +196,10 @@ export class App {
         });
 
         // Export modal
-        this.exportModal = new ExportModal(this.modalEl, () => this.closeModal());
+        this.exportModal = new ExportModal(this.modalEl, () => this.closeModal(), () => this.showAccount());
+
+        // Account & premium sync modal
+        this.accountModal = new AccountModal(this.modalEl);
 
         // Gallery modal
         this.galleryModal = new GalleryModal(this.modalEl, () => this.closeModal());
@@ -623,6 +669,10 @@ export class App {
 
     showSettings(): void {
         this.exportModal!.renderSettings();
+    }
+
+    showAccount(): void {
+        void this.accountModal!.show();
     }
 
     showDLICalculator(callback?: (dli: number) => void): void {

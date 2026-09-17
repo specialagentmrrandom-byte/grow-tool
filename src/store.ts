@@ -38,6 +38,7 @@ type StorageEventCallback = (event: StorageEvent) => void;
 class Store {
     private data: StoreData;
     private eventCallbacks: StorageEventCallback[] = [];
+    private changeCallbacks: Array<() => void> = [];
 
     constructor() {
         this.data = this.load();
@@ -48,6 +49,14 @@ class Store {
         this.eventCallbacks.push(callback);
         return () => {
             this.eventCallbacks = this.eventCallbacks.filter(cb => cb !== callback);
+        };
+    }
+
+    /** Subscribe to successful saves (used by the sync engine to schedule an upload). */
+    onChange(callback: () => void): () => void {
+        this.changeCallbacks.push(callback);
+        return () => {
+            this.changeCallbacks = this.changeCallbacks.filter(cb => cb !== callback);
         };
     }
 
@@ -188,6 +197,7 @@ class Store {
             }
 
             localStorage.setItem(STORAGE_KEY, json);
+            this.changeCallbacks.forEach(cb => cb());
             return true;
         } catch (e) {
             const errorMessage = e instanceof Error ? e.message : 'Unknown error';
@@ -279,6 +289,7 @@ class Store {
         }
 
         this.data.grows.splice(index, 1);
+        this.data.deletedGrows = { ...this.data.deletedGrows, [id]: new Date().toISOString() };
         this.save();
         return true;
     }
@@ -427,6 +438,7 @@ class Store {
 
         grow.entries.splice(index, 1);
         grow.updatedAt = new Date().toISOString();
+        grow.deletedEntries = { ...grow.deletedEntries, [entryId]: grow.updatedAt };
 
         this.save();
         return true;
@@ -545,6 +557,40 @@ class Store {
             return true;
         }
         return false;
+    }
+
+    // === Sync ===
+
+    /** Snapshot of everything the sync engine needs (deep copy, safe to mutate). */
+    getSyncSnapshot(): { grows: Grow[]; deletedGrows: Record<string, string>; strains: string[] } {
+        return structuredClone({
+            grows: this.data.grows,
+            deletedGrows: this.data.deletedGrows ?? {},
+            strains: this.data.settings.strains,
+        });
+    }
+
+    /**
+     * Apply a merged sync result. Timestamps come from the merge and are kept
+     * as-is (not bumped), otherwise every sync would look like a new edit.
+     * Photos of grows/entries that disappeared are cleaned up locally.
+     */
+    applySyncResult(result: { grows: Grow[]; deletedGrows: Record<string, string>; strains: string[] }): boolean {
+        const keptPhotoIds = new Set(result.grows.flatMap(g => g.entries.flatMap(e => e.photoIds ?? [])));
+        const removedPhotoIds = this.data.grows
+            .flatMap(g => g.entries.flatMap(e => e.photoIds ?? []))
+            .filter(id => !keptPhotoIds.has(id));
+
+        this.data.grows = result.grows;
+        this.data.deletedGrows = result.deletedGrows;
+        this.data.settings.strains = result.strains;
+
+        if (removedPhotoIds.length > 0) {
+            photoStore.deletePhotos(removedPhotoIds).catch(err => {
+                console.warn('Failed to delete some photos from IndexedDB:', err);
+            });
+        }
+        return this.save();
     }
 
     // === Export / Import ===

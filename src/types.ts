@@ -214,6 +214,7 @@ export interface Grow {
     light: LightSettings;
     tent?: TentConfig;    // Tent dimensions for planner
     entries: Entry[];
+    deletedEntries?: Record<string, string>;  // Sync tombstones: entry id → deletion time (ISO)
     createdAt: string;
     updatedAt: string;
 }
@@ -231,6 +232,7 @@ export interface StoreData {
     grows: Grow[];
     settings: Settings;
     version: number;
+    deletedGrows?: Record<string, string>;  // Sync tombstones: grow id → deletion time (ISO)
 }
 
 // Phase info for display

@@ -12,3 +12,4 @@ export { ReminderBar } from './ReminderBar';
 export { QuickLogSheet } from './QuickLogSheet';
 export { ImageViewer } from './ImageViewer';
 export { TutorialOverlay } from './TutorialOverlay';
+export { AccountModal } from './AccountModal';

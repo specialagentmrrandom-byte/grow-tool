@@ -339,4 +339,49 @@ describe('Store', () => {
       expect(size).toBeLessThan(1); // Should be small
     });
   });
+
+  describe('Sync support', () => {
+    const newGrow = () => store.addGrow({
+      name: 'Sync', strain: 'S', plantCount: 1, plants: [], type: 'auto' as GrowType,
+      dates: { germStart: '2025-01-01' }, light: { ppfd: 500, vegHours: 18, flowerHours: 12 },
+    });
+
+    it('records a tombstone when a grow is deleted', () => {
+      const grow = newGrow();
+      store.deleteGrow(grow.id);
+      expect(store.getSyncSnapshot().deletedGrows[grow.id]).toBeTruthy();
+    });
+
+    it('records a tombstone when an entry is deleted', () => {
+      const grow = newGrow();
+      const entry = store.addEntry(grow.id, { date: '2025-01-10', type: 'note', title: 'x' })!;
+      store.deleteEntry(grow.id, entry.id);
+      expect(store.getGrow(grow.id)!.deletedEntries?.[entry.id]).toBeTruthy();
+    });
+
+    it('notifies change listeners on save', () => {
+      let calls = 0;
+      const off = store.onChange(() => calls++);
+      newGrow();
+      off();
+      newGrow();
+      expect(calls).toBe(1);
+    });
+
+    it('applies a sync result without touching timestamps', () => {
+      const grow = newGrow();
+      const snapshot = store.getSyncSnapshot();
+      snapshot.grows[0].name = 'From other device';
+      store.applySyncResult({ ...snapshot, strains: ['S', 'Remote strain'] });
+      expect(store.getGrow(grow.id)!.name).toBe('From other device');
+      expect(store.getGrow(grow.id)!.updatedAt).toBe(grow.updatedAt);
+      expect(store.getStrains()).toContain('Remote strain');
+    });
+
+    it('snapshot is a copy', () => {
+      const grow = newGrow();
+      store.getSyncSnapshot().grows[0].name = 'changed';
+      expect(store.getGrow(grow.id)!.name).toBe('Sync');
+    });
+  });
 });

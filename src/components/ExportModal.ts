@@ -1,4 +1,6 @@
 import { store } from '../store';
+import { isSyncConfigured } from '../sync/config';
+import { syncEngine, canUseSync } from '../sync/engine';
 import {
     buildOvergrowNewTopicUrl,
     willTruncateForUrl,
@@ -10,10 +12,12 @@ export class ExportModal {
     private container: HTMLElement;
     private onClose: () => void;
     private currentGrowId: string | null = null;
+    private onOpenAccount?: () => void;
 
-    constructor(container: HTMLElement, onClose: () => void) {
+    constructor(container: HTMLElement, onClose: () => void, onOpenAccount?: () => void) {
         this.container = container;
         this.onClose = onClose;
+        this.onOpenAccount = onOpenAccount;
         this.setupEvents();
     }
 
@@ -23,6 +27,10 @@ export class ExportModal {
 
             if (target.closest('.modal-close') || target.classList.contains('modal-overlay')) {
                 this.onClose();
+            }
+
+            if (target.closest('.open-account-btn')) {
+                this.onOpenAccount?.();
             }
 
             if (target.closest('.copy-btn')) {
@@ -272,6 +280,8 @@ export class ExportModal {
               <p style="font-size: var(--font-size-xs); color: var(--color-text-muted); margin-top: var(--space-xs);">Automatic mode syncs with your system preferences.</p>
             </div>
 
+            ${this.renderSyncSection()}
+
             <div class="settings-section">
               <h4>💾 Storage</h4>
               
@@ -332,6 +342,34 @@ export class ExportModal {
     `;
 
         this.container.innerHTML = html;
+    }
+
+    private renderSyncSection(): string {
+        if (!isSyncConfigured() || !this.onOpenAccount) return '';
+        const state = syncEngine.getState();
+        const ent = state.entitlement;
+        const plan = ent ? this.escape(ent.plan_name) : '';
+        const line = !state.email
+            ? 'Create a free account — add sync across devices whenever you like.'
+            : !ent
+                ? `Signed in as ${this.escape(state.email)}`
+                : !canUseSync(ent)
+                    ? `Signed in as ${this.escape(state.email)} · ${plan}`
+                    : ent.sync_consent_at
+                        ? `✨ ${plan} · ${state.lastSyncedAt ? 'up to date' : 'sync on'}`
+                        : `✨ ${plan} · turn on sync to start`;
+        return `
+            <div class="settings-section">
+              <h4>☁️ Sync across devices</h4>
+              <p style="font-size: var(--font-size-sm); color: var(--color-text-muted); margin-bottom: var(--space-sm);">${line}</p>
+              <button class="open-account-btn btn-secondary">${state.email ? '👤 Account & sync' : '☁️ Sign in or create free account'}</button>
+            </div>`;
+    }
+
+    private escape(str: string): string {
+        const div = document.createElement('div');
+        div.textContent = str;
+        return div.innerHTML;
     }
 
     private async copyToClipboard(): Promise<void> {

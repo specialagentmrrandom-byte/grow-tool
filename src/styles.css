@@ -5751,3 +5751,242 @@ body.grow-popup-open {
         top: 0;
     }
 }
+/* ========================================
+   Account & premium sync
+======================================== */
+.account-modal .modal-body {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+}
+
+.account-pitch p {
+    margin-bottom: var(--space-xs);
+    line-height: 1.5;
+}
+
+.account-form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+}
+
+.account-submit,
+.account-cta {
+    width: 100%;
+    text-align: center;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+}
+
+.account-password {
+    display: flex;
+    gap: var(--space-xs);
+    align-items: center;
+}
+
+.account-password input {
+    flex: 1;
+}
+
+.link-btn {
+    background: none;
+    border: none;
+    padding: var(--space-xs) 0;
+    color: var(--color-primary);
+    font: inherit;
+    font-size: var(--font-size-sm);
+    cursor: pointer;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    align-self: flex-start;
+}
+
+.link-btn:disabled {
+    opacity: 0.5;
+    cursor: default;
+}
+
+/* Kept apart from the submit button on purpose, so "sign in" and "sign up" aren't mixed up */
+.account-switch {
+    margin-top: var(--space-sm);
+    padding: var(--space-md);
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius-sm);
+    background: var(--color-bg-elevated);
+    font-size: var(--font-size-sm);
+    color: var(--color-text-muted);
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+    flex-wrap: wrap;
+}
+
+.account-switch .link-btn {
+    align-self: auto;
+}
+
+.account-notice {
+    padding: var(--space-sm) var(--space-md);
+    border-radius: var(--border-radius-sm);
+    font-size: var(--font-size-sm);
+    line-height: 1.5;
+    background: color-mix(in srgb, var(--color-primary) 15%, transparent);
+    border: 1px solid color-mix(in srgb, var(--color-primary) 40%, transparent);
+}
+
+.account-notice.error {
+    background: color-mix(in srgb, var(--color-danger) 15%, transparent);
+    border-color: color-mix(in srgb, var(--color-danger) 45%, transparent);
+}
+
+.account-card {
+    padding: var(--space-md);
+    border-radius: var(--border-radius-sm);
+    background: var(--color-bg-elevated);
+    border: 1px solid var(--color-border);
+    display: grid;
+    gap: var(--space-xs);
+}
+
+.account-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: var(--space-sm);
+    font-size: var(--font-size-sm);
+    overflow-wrap: anywhere;
+}
+
+.account-label {
+    color: var(--color-text-muted);
+}
+
+.account-badge {
+    padding: 2px 10px;
+    border-radius: 999px;
+    background: var(--color-bg-card);
+    border: 1px solid var(--color-border);
+    font-size: var(--font-size-xs);
+}
+
+.account-badge.premium {
+    background: color-mix(in srgb, var(--color-flower) 30%, transparent);
+    border-color: var(--color-flower);
+}
+
+.account-benefits {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 var(--space-md);
+    display: grid;
+    gap: var(--space-xs);
+    font-size: var(--font-size-sm);
+}
+
+.account-consent {
+    display: flex;
+    gap: var(--space-sm);
+    align-items: flex-start;
+    margin: var(--space-sm) 0 var(--space-md);
+    font-size: var(--font-size-sm);
+    line-height: 1.5;
+    cursor: pointer;
+}
+
+.account-consent input {
+    margin-top: 3px;
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+}
+
+.account-sync-status {
+    margin-bottom: var(--space-sm);
+}
+
+.account-danger {
+    color: var(--color-danger);
+}
+
+.plan-list {
+    display: grid;
+    gap: var(--space-md);
+    margin-bottom: var(--space-sm);
+}
+
+.plan-card {
+    padding: var(--space-md);
+    border-radius: var(--border-radius-sm);
+    border: 1px solid color-mix(in srgb, var(--color-flower) 55%, var(--color-border));
+    background: color-mix(in srgb, var(--color-flower) 8%, var(--color-bg-elevated));
+}
+
+.plan-card-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: var(--space-sm);
+    margin-bottom: var(--space-xs);
+}
+
+.plan-price {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-muted);
+}
+
+.plan-desc {
+    font-size: var(--font-size-sm);
+    margin-bottom: var(--space-sm);
+    line-height: 1.5;
+}
+
+/* 🎟️ Grow Key / supporter payment box */
+.account-perk .account-form {
+    margin-bottom: var(--space-xs);
+}
+
+.account-key-input {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.account-key-input::placeholder {
+    letter-spacing: 0.04em;
+}
+
+/* 🔐 Recovery key & unlock */
+.account-recovery {
+    border: 1px solid color-mix(in srgb, var(--color-flower) 55%, var(--color-border));
+    background: color-mix(in srgb, var(--color-flower) 10%, var(--color-bg-elevated));
+    border-radius: var(--border-radius-sm);
+    padding: var(--space-md);
+}
+
+.recovery-code {
+    display: block;
+    margin: var(--space-sm) 0;
+    padding: var(--space-sm) var(--space-md);
+    border-radius: var(--border-radius-sm);
+    background: var(--color-bg-card);
+    border: 1px dashed var(--color-border);
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: var(--font-size-sm);
+    letter-spacing: 0.06em;
+    text-align: center;
+    user-select: all;
+    overflow-wrap: anywhere;
+}
+
+.account-unlock .btn-group {
+    flex-wrap: wrap;
+    gap: var(--space-sm);
+}
+
+.account-captcha:not(:empty) {
+    margin: var(--space-xs) 0;
+    min-height: 65px;
+}
