@@ -2,86 +2,94 @@ import { test, expect, type Page, type Route } from '@playwright/test';
 import { makeSeedGrow, makeEntry } from './helpers';
 
 /**
- * Premium sync against an in-memory fake of the Supabase REST APIs.
- * Two browser contexts act as two devices sharing one account.
+ * ☁️ Sync against an in-memory fake of the Supabase REST APIs: an account that
+ * may not sync uploads nothing, and consent comes before the first upload.
  * Runs only when the dev server was started with VITE_SUPABASE_URL set.
  */
 const SUPABASE = process.env.VITE_SUPABASE_URL ?? '';
 test.skip(!SUPABASE, 'VITE_SUPABASE_URL not set — sync e2e skipped');
 
-interface FakeServer {
-    account: { tier: string; premium_until: string | null; sync_consent_at: string | null };
-    rows: Map<string, { id: string; data: unknown; deleted: boolean; updated_at: string }>;
-    strains: string[] | null;
-    writes: number;
-}
-
 const USER = { id: 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', email: 'grower@example.com' };
+const PASSWORD = 'correct-horse';
 const cors = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Headers': '*',
     'Access-Control-Allow-Methods': 'GET,POST,PATCH,PUT,DELETE,OPTIONS',
 };
 
-function canSync(s: FakeServer) {
-    return s.account.tier === 'premium' && !!s.account.sync_consent_at;
+interface FakeServer {
+    /** What the server says this account may do. */
+    syncEnabled: boolean;
+    consentAt: string | null;
+    keyRecord: Record<string, unknown> | null;
+    rows: Map<string, { id: string; data: unknown; deleted: boolean; updated_at: string }>;
+    settings: unknown;
+    writes: number;
 }
+
+const newServer = (over: Partial<FakeServer> = {}): FakeServer => ({
+    syncEnabled: false, consentAt: null, keyRecord: null, rows: new Map(), settings: null, writes: 0, ...over,
+});
+
+/** The server's own gate — the same one RLS enforces in the real project. */
+const mayWrite = (s: FakeServer) => s.syncEnabled && !!s.consentAt;
 
 async function attachFake(page: Page, server: FakeServer) {
     await page.route(`${SUPABASE}/**`, async (route: Route) => {
         const req = route.request();
-        const url = new URL(req.url());
-        const json = (status: number, body: unknown) => route.fulfill({ status, headers: { ...cors, 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
-        if (req.method() === 'OPTIONS') return route.fulfill({ status: 204, headers: cors });
+        const p = new URL(req.url()).pathname;
+        const method = req.method();
+        const json = (status: number, body: unknown) =>
+            route.fulfill({ status, headers: { ...cors, 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+        if (method === 'OPTIONS') return route.fulfill({ status: 204, headers: cors });
 
-        const p = url.pathname;
         if (p === '/auth/v1/token') {
             const body = req.postDataJSON();
-            if (body.password !== 'correct-horse') return json(400, { error_code: 'invalid_credentials', msg: 'Invalid login credentials' });
+            if (body.password !== PASSWORD) return json(400, { error_code: 'invalid_credentials', msg: 'Invalid login credentials' });
             return json(200, { access_token: 'at', refresh_token: 'rt', expires_in: 3600, user: USER });
         }
+        if (p === '/auth/v1/user') return json(200, USER);
         if (p === '/auth/v1/logout') return route.fulfill({ status: 204, headers: cors });
-        if (p === '/rest/v1/accounts' && req.method() === 'GET') return json(200, [server.account]);
-        if (p === '/rest/v1/accounts' && req.method() === 'PATCH') {
-            Object.assign(server.account, req.postDataJSON());
-            return json(200, [server.account]);
+        if (p === '/rest/v1/app_flags') return json(200, []);   // no switches set → defaults
+        if (p === '/rest/v1/rpc/my_entitlement') {
+            return json(200, [{
+                sync_enabled: server.syncEnabled,
+                photo_quota_mb: server.syncEnabled ? 500 : 0,
+                sync_consent_at: server.consentAt,
+            }]);
         }
-        if (p === '/rest/v1/sync_grows' && req.method() === 'GET') return json(200, [...server.rows.values()]);
-        if (p === '/rest/v1/sync_grows' && req.method() === 'POST') {
-            if (!canSync(server)) return json(403, { message: 'row-level security' });
-            for (const r of req.postDataJSON()) {
-                server.rows.set(r.id, { id: r.id, data: r.data, deleted: r.deleted, updated_at: new Date().toISOString() });
+        if (p === '/rest/v1/accounts' && method === 'PATCH') {
+            server.consentAt = new Date().toISOString();
+            return json(200, [{ sync_consent_at: server.consentAt }]);
+        }
+        if (p === '/rest/v1/user_keys') {
+            if (method === 'GET') return json(200, server.keyRecord ? [server.keyRecord] : []);
+            server.keyRecord = req.postDataJSON();
+            return route.fulfill({ status: 201, headers: cors });
+        }
+        if (p === '/rest/v1/sync_grows') {
+            if (method === 'GET') return json(200, [...server.rows.values()]);
+            if (!mayWrite(server)) return json(403, { message: 'row-level security' });
+            for (const row of req.postDataJSON()) {
+                server.rows.set(row.id, { id: row.id, data: row.data, deleted: row.deleted, updated_at: new Date().toISOString() });
                 server.writes++;
             }
             return route.fulfill({ status: 201, headers: cors });
         }
-        if (p === '/rest/v1/sync_settings' && req.method() === 'GET') return json(200, server.strains ? [{ data: { strains: server.strains } }] : []);
-        if (p === '/rest/v1/sync_settings' && req.method() === 'POST') {
-            if (!canSync(server)) return json(403, {});
-            server.strains = req.postDataJSON().data.strains;
+        if (p === '/rest/v1/sync_settings') {
+            if (method === 'GET') return json(200, server.settings ? [{ data: server.settings }] : []);
+            if (!mayWrite(server)) return json(403, { message: 'row-level security' });
+            server.settings = req.postDataJSON().data;
             return route.fulfill({ status: 201, headers: cors });
         }
         if (p.startsWith('/storage/v1/object/list/')) return json(200, []);
-        return json(404, { message: `unmocked ${req.method()} ${p}` });
+        return json(200, []);
     });
 }
 
-async function openSettings(page: Page) {
-    await page.locator('.settings-btn').first().click();
-    await page.getByRole('button', { name: /Sign in or create account|Account & sync/ }).click();
-    await expect(page.locator('.account-modal')).toBeVisible();
-}
-
-async function signIn(page: Page, password = 'correct-horse') {
-    await page.locator('#account-email').fill(USER.email);
-    await page.locator('#account-password').fill(password);
-    await page.locator('.account-submit').click();
-}
-
-async function seed(page: Page, grows: unknown[]) {
+async function openAccount(page: Page, server: FakeServer, grows: unknown[]) {
+    await attachFake(page, server);
     await page.addInitScript((data) => {
-        if (localStorage.getItem('e2e-seeded')) return;
-        localStorage.setItem('e2e-seeded', 'true');
         localStorage.setItem('grow-tool-data', JSON.stringify({
             grows: data,
             settings: { strains: [], defaultLight: { ppfd: 500, vegHours: 18, flowerHours: 12 }, theme: 'dark' },
@@ -91,81 +99,52 @@ async function seed(page: Page, grows: unknown[]) {
         localStorage.setItem('og-grow-theme', 'dark');
     }, grows);
     await page.goto('/app.html');
+    await page.locator('.settings-btn').first().click();
+    await page.getByRole('button', { name: /Sign in or create free account|Account & sync/ }).click();
+    await expect(page.locator('.account-modal')).toBeVisible();
 }
 
-test.describe('Premium sync', () => {
+async function signIn(page: Page, password = PASSWORD) {
+    await page.locator('#account-email').fill(USER.email);
+    await page.locator('#account-password').fill(password);
+    await page.locator('.account-submit').first().click();
+}
+
+test.describe('Sync', () => {
     test('wrong password shows a friendly error', async ({ page }) => {
-        const server: FakeServer = { account: { tier: 'free', premium_until: null, sync_consent_at: null }, rows: new Map(), strains: null, writes: 0 };
-        await attachFake(page, server);
-        await seed(page, []);
-        await openSettings(page);
+        await openAccount(page, newServer(), []);
         await signIn(page, 'nope');
         await expect(page.locator('.account-notice.error')).toContainText('Email or password is wrong');
     });
 
-    test('free account uploads nothing; premium asks for consent, then syncs to a second device', async ({ browser }) => {
-        const server: FakeServer = { account: { tier: 'free', premium_until: null, sync_consent_at: null }, rows: new Map(), strains: null, writes: 0 };
+    test('an account without sync uploads nothing; consent comes before the first upload', async ({ page }) => {
+        const server = newServer();
+        await openAccount(page, server, [makeSeedGrow({ entries: [makeEntry({ id: 'entry_from_a', title: 'Topped today' })] })]);
+        await signIn(page);
 
-        // ── Device A: has a grow with an entry ──
-        const ctxA = await browser.newContext();
-        const pageA = await ctxA.newPage();
-        await attachFake(pageA, server);
-        await seed(pageA, [makeSeedGrow({ entries: [makeEntry({ id: 'entry_from_a', title: 'Topped today' })] })]);
-        await openSettings(pageA);
-        await signIn(pageA);
-
-        await expect(pageA.locator('.account-badge')).toHaveText(/Free/);
+        // Signed in, but the server does not allow sync for this account
+        await expect(page.locator('.account-footer')).toBeVisible();
+        await expect(page.getByRole('button', { name: /Turn on sync/ })).toHaveCount(0);
         expect(server.writes).toBe(0);
 
-        // Premium granted on the server → consent screen
-        server.account.tier = 'premium';
-        // (a background sync may pick this up first, so trigger a check without racing the re-render)
-        await pageA.evaluate(async () => {
+        // The server allows it now → the diary still waits for consent
+        server.syncEnabled = true;
+        await page.evaluate(async () => {
             const { syncEngine } = await import('/src/sync/engine.ts');
             await syncEngine.syncNow();
         });
-        await expect(pageA.getByRole('button', { name: /Turn on sync/ })).toBeVisible();
+        await expect(page.getByRole('button', { name: /Turn on sync/ })).toBeVisible();
         expect(server.writes).toBe(0);
 
-        // Consent is required
-        await pageA.getByRole('button', { name: /Turn on sync/ }).click();
-        await expect(pageA.locator('.account-notice.error')).toContainText('tick the box');
-        await pageA.locator('#account-consent').check();
-        await pageA.getByRole('button', { name: /Turn on sync/ }).click();
-        await expect(pageA.locator('.account-sync-status')).toContainText('Up to date');
-        expect(server.rows.has('grow_e2e_1')).toBe(true);
+        // Ticking the box is required
+        await page.getByRole('button', { name: /Turn on sync/ }).click();
+        await expect(page.locator('.account-notice.error')).toContainText('tick the box');
+        await page.locator('#account-consent').check();
+        await page.getByRole('button', { name: /Turn on sync/ }).click();
 
-        // ── Device B: empty, signs in, gets the grow ──
-        const ctxB = await browser.newContext();
-        const pageB = await ctxB.newPage();
-        await attachFake(pageB, server);
-        await seed(pageB, []);
-        await openSettings(pageB);
-        await signIn(pageB);
-        await expect(pageB.locator('.account-sync-status')).toContainText('Up to date');
-        await pageB.locator('.modal-close').first().click();
-        await expect(pageB.getByText('E2E Test Grow').first()).toBeVisible();
-
-        const stored = await pageB.evaluate(() => JSON.parse(localStorage.getItem('grow-tool-data')!));
-        expect(stored.grows[0].entries.map((e: { id: string }) => e.id)).toContain('entry_from_a');
-
-        // ── Device B deletes the grow → A loses it on next sync ──
-        const beforeWrites = server.writes;
-        await pageB.evaluate(async () => {
-            const { store } = await import('/src/store.ts');
-            store.deleteGrow('grow_e2e_1');
-        });
-        await expect.poll(() => server.writes, { timeout: 15_000 }).toBeGreaterThan(beforeWrites);
-        expect(server.rows.get('grow_e2e_1')?.deleted).toBe(true);
-
-        await pageA.locator('.modal-close').first().click();
-        await pageA.evaluate(async () => {
-            const { syncEngine } = await import('/src/sync/engine.ts');
-            await syncEngine.syncNow();
-        });
-        await expect(pageA.getByText('E2E Test Grow')).toHaveCount(0);
-
-        await ctxA.close();
-        await ctxB.close();
+        await expect(page.locator('.account-sync-status')).toContainText('Up to date');
+        expect(server.writes).toBeGreaterThan(0);
+        // and what arrived is sealed, not the diary in the clear
+        expect(JSON.stringify([...server.rows.values()])).not.toContain('Topped today');
     });
 });

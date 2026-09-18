@@ -14,36 +14,18 @@ export class SyncHttpError extends Error {
     }
 }
 
-export type PlanStatus =
-    | 'pending' | 'trialing' | 'active' | 'past_due' | 'canceled' | 'expired' | 'refunded' | 'paused';
-
 /**
- * What the signed-in user may do right now — computed by the server
- * (public.my_entitlement). `status` is 'free' when nothing extra is in force
- * and the account is on the plan everyone gets.
+ * What the signed-in account may do right now — the server computes it
+ * (public.my_entitlement) and this is the part the app itself needs. A build
+ * with add-ons may read more columns from the same row.
  */
-export interface Entitlement {
-    plan_id: string;
-    plan_name: string;
+export interface SyncAccess {
+    /** Whether this account may keep a copy of the diary on the server. */
     sync_enabled: boolean;
+    /** How much room its photos get, in MB. */
     photo_quota_mb: number;
-    status: PlanStatus | 'free';
-    current_period_end: string | null;
-    cancel_at_period_end: boolean;
-    provider: string | null;
+    /** When the user agreed to sync — null until they do. */
     sync_consent_at: string | null;
-}
-
-/** One row of public.plans — what an account can be on. */
-export interface PlanOption {
-    id: string;
-    name: string;
-    description: string | null;
-    price_label: string | null;
-    checkout_url: string | null;
-    sync_enabled: boolean;
-    photo_quota_mb: number;
-    rank: number;
 }
 
 export interface RemotePhoto {
@@ -58,8 +40,8 @@ export interface RemotePhoto {
 const PHOTO_BUCKET = 'photos';
 
 /**
- * One authenticated REST call against the project. Exported as `restCall` so the
- * optional premium layer can use the same token handling and error shapes.
+ * One authenticated REST call against the project. Exported as `restCall` so an
+ * optional add-on can use the same token handling and error shapes.
  */
 async function call(path: string, init: RequestInit & { headers?: Record<string, string> } = {}): Promise<Response> {
     const token = await auth.getAccessToken();
@@ -89,9 +71,10 @@ export { call as restCall };
 export const json = { 'Content-Type': 'application/json' };
 
 export const syncApi = {
-    async getEntitlement(): Promise<Entitlement | null> {
+    /** What this account may do; null when the server has no row for it yet. */
+    async getAccess(): Promise<SyncAccess | null> {
         const res = await call('/rest/v1/rpc/my_entitlement', { method: 'POST', headers: json, body: '{}' });
-        const rows = await res.json() as Entitlement[];
+        const rows = await res.json() as SyncAccess[];
         return rows[0] ?? null;
     },
 
@@ -137,11 +120,6 @@ export const syncApi = {
         });
         if (!res.ok) throw new SyncHttpError(await res.text().catch(() => '') || res.statusText, res.status);
         return parseFlags(await res.json());
-    },
-
-    async getPlans(): Promise<PlanOption[]> {
-        const res = await call('/rest/v1/plans?select=id,name,description,price_label,checkout_url,sync_enabled,photo_quota_mb,rank&is_public=eq.true&order=rank.asc');
-        return res.json();
     },
 
     async giveConsent(userId: string): Promise<void> {

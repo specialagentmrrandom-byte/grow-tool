@@ -18,7 +18,7 @@ It contains the source only — build tooling, assets and hosting config aren't 
 
 ## What the app does
 
-OG Grow Journal Assistant is a Progressive Web App for documenting a grow day by day. It runs entirely in the browser, works offline, and keeps data on the user's own device — no account needed, no tracking. An optional premium sync keeps a diary on several devices.
+OG Grow Journal Assistant is a Progressive Web App for documenting a grow day by day. It runs entirely in the browser, works offline, and keeps data on the user's own device — no account needed, no tracking. An optional, end-to-end encrypted sync keeps a diary on several devices.
 
 - **📅 Grow diary** — dated entries with notes, photos and milestones; color-coded phases from seed to harvest
 - **📊 Visual timeline** — every phase at a glance, collapsible weeks, a "today" marker
@@ -27,11 +27,11 @@ OG Grow Journal Assistant is a Progressive Web App for documenting a grow day by
 - **🏕️ Tent planner** — top-down pot layout with drag & drop and bin-packing auto-arrange
 - **🖼️ Photo gallery** — slideshow with day/week/phase labels
 - **📄 Reports & export** — standalone HTML report, Markdown for forums, post to Overgrow, JSON backup & restore
-- **☁️ Premium sync (optional)** — grows and compressed photos in step across devices (`src/sync/`)
+- **☁️ Sync across devices (optional)** — grows and compressed photos in step across devices, encrypted on the device before upload (`src/sync/`)
 
 ## Privacy by design
 
-- Grow data is stored in `localStorage`, photos in `IndexedDB` — nothing leaves the device unless the user exports, shares, or turns on premium sync after giving consent.
+- Grow data is stored in `localStorage`, photos in `IndexedDB` — nothing leaves the device unless the user exports, shares, or turns on sync after giving consent.
 - A service worker caches the app so it works with no connection.
 - No account needed, no analytics, no ads.
 
@@ -50,7 +50,7 @@ src/
   app.ts            app controller: hash routing and view switching
   timeline.ts       timeline renderer
   overgrow.ts       Overgrow links and forum-topic builder
-  sync/             optional premium sync: auth, merge rules, photo upload
+  sync/             optional sync: auth, encryption, merge rules, photo upload
   theme.ts          light/dark theming
   components/       UI components (Dashboard, GrowForm, EntryForm, TentPlanner, …)
 tests/              Vitest unit tests (DLI math, store, Markdown export, Overgrow)
@@ -73,9 +73,12 @@ When suggesting changes, please keep to the app's conventions:
 - keep new data fields optional so existing diaries keep loading
 - keep it offline-first and friendly for amateur growers
 
-## Free core, optional premium
+## Sync is optional
 
-The diary and all its tools are free. Cross-device sync is an optional paid extra that covers server and storage costs. No ads, and user data is never sold.
+The diary and all its tools work with no account at all. Sync is something you
+switch on: grows and photos are encrypted on the device first, so the server
+only ever holds blocks nobody there can read. No ads, and user data is never
+sold.
 
 ## License
 

@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { mergeAll, mergeGrow, mergeTombstones, stableStringify, type RemoteGrowRow } from '../src/sync/merge';
-import { canUseSync, daysLeft } from '../src/sync/engine';
+import { canUseSync } from '../src/sync/engine';
 import type { Entry, Grow } from '../src/types';
 
 const entry = (id: string, updatedAt: string, extra: Partial<Entry> = {}): Entry => ({
@@ -135,20 +135,11 @@ describe('sync merge', () => {
   });
 });
 
-describe('entitlement helpers', () => {
-  const base = {
-    plan_id: 'free', plan_name: 'Free', sync_enabled: false, photo_quota_mb: 0, status: 'free' as const,
-    current_period_end: null, cancel_at_period_end: false, provider: null, sync_consent_at: null,
-  };
-  it('sync follows the server-computed plan', () => {
+describe('sync access', () => {
+  const base = { sync_enabled: false, photo_quota_mb: 0, sync_consent_at: null };
+  it('follows what the server allows', () => {
     expect(canUseSync(null)).toBe(false);
     expect(canUseSync(base)).toBe(false);
-    expect(canUseSync({ ...base, plan_id: 'premium', sync_enabled: true, status: 'active' })).toBe(true);
-  });
-  it('daysLeft counts to the period end', () => {
-    const now = Date.parse('2026-06-01T00:00:00Z');
-    expect(daysLeft(base, now)).toBeNull();
-    expect(daysLeft({ ...base, current_period_end: '2026-06-11T00:00:00Z' }, now)).toBe(10);
-    expect(daysLeft({ ...base, current_period_end: '2026-05-30T00:00:00Z' }, now)).toBe(-2);
+    expect(canUseSync({ ...base, sync_enabled: true, photo_quota_mb: 500 })).toBe(true);
   });
 });

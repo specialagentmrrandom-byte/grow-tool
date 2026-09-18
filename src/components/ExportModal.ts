@@ -347,17 +347,14 @@ export class ExportModal {
     private renderSyncSection(): string {
         if (!isSyncConfigured() || !this.onOpenAccount) return '';
         const state = syncEngine.getState();
-        const ent = state.entitlement;
-        const plan = ent ? this.escape(ent.plan_name) : '';
+        const access = state.access;
         const line = !state.email
-            ? 'Create a free account — add sync across devices whenever you like.'
-            : !ent
+            ? 'Create a free account — you can switch sync on whenever you like.'
+            : !access || !canUseSync(access)
                 ? `Signed in as ${this.escape(state.email)}`
-                : !canUseSync(ent)
-                    ? `Signed in as ${this.escape(state.email)} · ${plan}`
-                    : ent.sync_consent_at
-                        ? `✨ ${plan} · ${state.lastSyncedAt ? 'up to date' : 'sync on'}`
-                        : `✨ ${plan} · turn on sync to start`;
+                : access.sync_consent_at
+                    ? `☁️ Sync is on · ${state.lastSyncedAt ? 'up to date' : 'starting…'}`
+                    : `☁️ Signed in as ${this.escape(state.email)} · turn sync on to start`;
         return `
             <div class="settings-section">
               <h4>☁️ Sync across devices</h4>

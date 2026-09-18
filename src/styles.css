@@ -5752,7 +5752,7 @@ body.grow-popup-open {
     }
 }
 /* ========================================
-   Account & premium sync
+   Account & sync
 ======================================== */
 .account-modal .modal-body {
     display: flex;
@@ -5771,8 +5771,8 @@ body.grow-popup-open {
     gap: var(--space-sm);
 }
 
-.account-submit,
-.account-cta {
+
+.account-submit {
     width: 100%;
     text-align: center;
     display: inline-flex;
@@ -5872,20 +5872,6 @@ body.grow-popup-open {
     font-size: var(--font-size-xs);
 }
 
-.account-badge.premium {
-    background: color-mix(in srgb, var(--color-flower) 30%, transparent);
-    border-color: var(--color-flower);
-}
-
-.account-benefits {
-    list-style: none;
-    padding: 0;
-    margin: 0 0 var(--space-md);
-    display: grid;
-    gap: var(--space-xs);
-    font-size: var(--font-size-sm);
-}
-
 .account-consent {
     display: flex;
     gap: var(--space-sm);
@@ -5909,53 +5895,6 @@ body.grow-popup-open {
 
 .account-danger {
     color: var(--color-danger);
-}
-
-.plan-list {
-    display: grid;
-    gap: var(--space-md);
-    margin-bottom: var(--space-sm);
-}
-
-.plan-card {
-    padding: var(--space-md);
-    border-radius: var(--border-radius-sm);
-    border: 1px solid color-mix(in srgb, var(--color-flower) 55%, var(--color-border));
-    background: color-mix(in srgb, var(--color-flower) 8%, var(--color-bg-elevated));
-}
-
-.plan-card-head {
-    display: flex;
-    justify-content: space-between;
-    align-items: baseline;
-    gap: var(--space-sm);
-    margin-bottom: var(--space-xs);
-}
-
-.plan-price {
-    font-size: var(--font-size-sm);
-    color: var(--color-text-muted);
-}
-
-.plan-desc {
-    font-size: var(--font-size-sm);
-    margin-bottom: var(--space-sm);
-    line-height: 1.5;
-}
-
-/* 🎟️ The add-on box on the account screen (code / reference form) */
-.account-perk .account-form {
-    margin-bottom: var(--space-xs);
-}
-
-.account-key-input {
-    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-}
-
-.account-key-input::placeholder {
-    letter-spacing: 0.04em;
 }
 
 /* 🔐 Recovery key & unlock */

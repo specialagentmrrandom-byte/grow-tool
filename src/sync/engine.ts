@@ -1,7 +1,7 @@
 /**
- * Sync engine: keeps this device's diary in step with the server for premium
- * accounts. Offline-first — the app never waits for it; failures only change
- * the status and are retried later.
+ * Sync engine: keeps this device's diary in step with the server for accounts
+ * that may sync. Offline-first — the app never waits for it; failures only
+ * change the status and are retried later.
  *
  * One run:  pull rows → merge (merge.ts) → apply locally → upload missing photos
  *           → push changed rows → download missing photos → clean old orphans.
@@ -16,7 +16,7 @@ import {
 } from './crypto';
 import { hasPlaintext, openRows, openSettings, sealRow, sealSettings } from './payload';
 import { isSyncConfigured } from './config';
-import { syncApi, SyncHttpError, type Entitlement, type PlanOption } from './api';
+import { syncApi, SyncHttpError, type SyncAccess } from './api';
 import { mergeAll, stableStringify, type GrowTombstone } from './merge';
 import type { Grow } from '../types';
 import { compressForSync } from './compress';
@@ -25,8 +25,8 @@ import { DEFAULT_FLAGS, type AppFlags } from './flags';
 export type SyncStatus =
     | 'disabled'       // not configured in this build
     | 'signed-out'
-    | 'free'           // signed in, current plan has no sync (free account)
-    | 'needs-consent'  // plan includes sync, but consent not given yet
+    | 'free'           // signed in, but this account may not sync
+    | 'needs-consent'  // the account may sync, but consent has not been given yet
     | 'locked'         // encrypted cloud copy on the server, no key on this device yet
     | 'idle'
     | 'syncing'
@@ -37,8 +37,8 @@ export interface SyncState {
     status: SyncStatus;
     email: string | null;
     userId: string | null;
-    entitlement: Entitlement | null;
-    plans: PlanOption[];
+    /** What the server allows this account (null while signed out or unknown). */
+    access: SyncAccess | null;
     /** What is switched on server-side (public.app_flags) */
     flags: AppFlags;
     /** Shown once, right after the key was created or replaced — never stored anywhere. */
@@ -55,14 +55,8 @@ const DEBOUNCE_MS = 4000;
 const INTERVAL_MS = 5 * 60 * 1000;
 
 /** The server decides; this only reads its answer. */
-export function canUseSync(entitlement: Entitlement | null): boolean {
-    return Boolean(entitlement?.sync_enabled);
-}
-
-/** Days until the current paid period ends (negative = already over), or null for no end. */
-export function daysLeft(entitlement: Entitlement | null, now = Date.now()): number | null {
-    if (!entitlement?.current_period_end) return null;
-    return Math.ceil((Date.parse(entitlement.current_period_end) - now) / 86_400_000);
+export function canUseSync(access: SyncAccess | null): boolean {
+    return Boolean(access?.sync_enabled);
 }
 
 type Listener = (state: SyncState) => void;
@@ -72,8 +66,7 @@ class SyncEngine {
         status: isSyncConfigured() ? 'signed-out' : 'disabled',
         email: null,
         userId: null,
-        entitlement: null,
-        plans: [],
+        access: null,
         flags: DEFAULT_FLAGS,
         recoveryKey: null,
         lastSyncedAt: null,
@@ -124,7 +117,7 @@ class SyncEngine {
             if (session) void this.syncNow();
             else {
                 this.dataKey = null;
-                this.set({ status: 'signed-out', entitlement: null, plans: [], error: null, recoveryKey: null, userId: null });
+                this.set({ status: 'signed-out', access: null, error: null, recoveryKey: null, userId: null });
             }
         });
         window.addEventListener('online', () => void this.syncNow());
@@ -256,7 +249,7 @@ class SyncEngine {
         if (!session) return;
         await this.running;
         await syncApi.deleteMySyncedData(session.userId);
-        this.set({ entitlement: this.state.entitlement ? { ...this.state.entitlement, sync_consent_at: null } : null, lastSyncedAt: null });
+        this.set({ access: this.state.access ? { ...this.state.access, sync_consent_at: null } : null, lastSyncedAt: null });
         await this.syncNow();
     }
 
@@ -283,7 +276,7 @@ class SyncEngine {
     private async runOnce(): Promise<void> {
         const session = await auth.getSession();
         if (!session) {
-            this.set({ status: 'signed-out', entitlement: null, plans: [] });
+            this.set({ status: 'signed-out', access: null });
             return;
         }
         if (!navigator.onLine) {
@@ -293,24 +286,23 @@ class SyncEngine {
 
         try {
             await this.refreshFlags();
-            // Re-checked on every run, so a cancellation or failed payment takes effect without re-login
-            const entitlement = await syncApi.getEntitlement();
-            if (!canUseSync(entitlement)) {
-                const plans = await syncApi.getPlans().catch(() => this.state.plans);
-                this.set({ status: 'free', entitlement, plans, error: null });
+            // Re-checked on every run, so a change on the server takes effect without re-login
+            const access = await syncApi.getAccess();
+            if (!canUseSync(access)) {
+                this.set({ status: 'free', access, error: null });
                 return;
             }
-            if (!entitlement?.sync_consent_at) {
-                this.set({ status: 'needs-consent', entitlement, error: null });
+            if (!access?.sync_consent_at) {
+                this.set({ status: 'needs-consent', access, error: null });
                 return;
             }
             const dataKey = await this.getDataKey();
             if (!dataKey) {
                 // The cloud copy is encrypted and this device has no key yet
-                this.set({ status: 'locked', entitlement, error: null });
+                this.set({ status: 'locked', access, error: null });
                 return;
             }
-            this.set({ status: 'syncing', entitlement, error: null });
+            this.set({ status: 'syncing', access, error: null });
 
             const [rawRows, rawSettings] = await Promise.all([syncApi.getGrows(), syncApi.getSettingsRow()]);
             const rows = await openRows(rawRows, dataKey);
@@ -351,7 +343,7 @@ class SyncEngine {
             // Photos first, so another device never sees an entry whose photo isn't there yet
             const uploaded = await this.uploadMissing(
                 session.userId, referenced, localIds, encryptedIds, remotePhotos.filter(p => p.encrypted),
-                entitlement.photo_quota_mb, dataKey);
+                access.photo_quota_mb, dataKey);
 
             // After the switch to encryption, every row is rewritten once — not just the changed ones
             const push: Array<{ id: string; data: Grow | GrowTombstone; deleted: boolean }> = plaintextLeft
@@ -392,7 +384,7 @@ class SyncEngine {
             } else if (e instanceof SyncHttpError && e.status === 401) {
                 await auth.signOut();
             } else if (e instanceof SyncHttpError && e.status === 403) {
-                // The server's gate said no (plan ended or consent withdrawn meanwhile) — re-read the entitlement
+                // The server's gate said no (access or consent changed meanwhile) — read it again
                 this.rerun = true;
             } else {
                 console.error('Sync failed:', e);

@@ -65,7 +65,7 @@ export class App {
         // Set up theme watcher for cross-tab sync
         this.setupThemeWatcher();
 
-        // Premium cross-device sync (no-op when not configured in this build)
+        // Cross-device sync (no-op when not configured in this build)
         this.setupSync();
 
         // Handle browser navigation
@@ -198,7 +198,7 @@ export class App {
         // Export modal
         this.exportModal = new ExportModal(this.modalEl, () => this.closeModal(), () => this.showAccount());
 
-        // Account & premium sync modal
+        // Account & sync modal
         this.accountModal = new AccountModal(this.modalEl);
 
         // Gallery modal

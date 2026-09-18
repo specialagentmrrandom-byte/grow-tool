@@ -3,7 +3,7 @@ import { syncEngine, canUseSync, type SyncState } from '../sync/engine';
 import { SyncHttpError } from '../sync/api';
 import { CryptoError } from '../sync/crypto';
 import { syncApi } from '../sync/api';
-import { PremiumPanel } from '../premium';
+import { createAccountAddon, type AccountAddon } from '../accountAddon';
 import { captchaEnabled, getCaptchaToken } from '../sync/captcha';
 import { showError, showSuccess } from '../toast';
 
@@ -12,7 +12,7 @@ type View = 'sign-in' | 'sign-up' | 'reset' | 'new-password' | 'account';
 const MIN_PASSWORD = 8;
 
 /**
- * ☁️ Account, plan & sync modal. Renders into the shared #modal container;
+ * ☁️ Account & sync modal. Renders into the shared #modal container;
  * closing (× / overlay) is handled by the modal host like every other modal.
  */
 export class AccountModal {
@@ -23,14 +23,14 @@ export class AccountModal {
     private showResend = false;
     private busy = false;
     private open = false;
-    /** Optional add-on layer for the account screen (absent in the public build) */
-    private premium: PremiumPanel;
+    /** Extra sections this build adds to the dialog, if any (see accountAddon.ts) */
+    private addon: AccountAddon | null;
     /** 🔐 how the user wants to open an encrypted cloud copy on this device */
     private unlockMode: 'password' | 'recovery' | 'fresh' = 'password';
 
     constructor(container: HTMLElement) {
         this.container = container;
-        this.premium = new PremiumPanel({
+        this.addon = createAccountAddon({
             container,
             escapeHtml: value => this.escapeHtml(value),
             isBusy: () => this.busy,
@@ -55,14 +55,14 @@ export class AccountModal {
             const action = target.closest<HTMLElement>('[data-account-action]')?.dataset.accountAction;
             if (!action) return;
             e.preventDefault();
-            void this.premium.handleAction(action).then(handled => {
+            void (this.addon?.handleAction(action) ?? Promise.resolve(false)).then(handled => {
                 if (!handled) void this.handleAction(action);
             });
         });
 
         this.container.addEventListener('input', (e) => {
             const input = e.target as HTMLInputElement;
-            if (input.closest('.account-modal')) this.premium.formatKeyInput(input);
+            if (input.closest('.account-modal')) this.addon?.formatInput(input);
         });
 
         this.container.addEventListener('submit', (e) => {
@@ -170,7 +170,7 @@ export class AccountModal {
     }
 
     private async handleSubmit(form: HTMLFormElement): Promise<void> {
-        if (await this.premium.handleSubmit(form)) return;
+        if (this.addon && await this.addon.handleSubmit(form)) return;
         if (form.dataset.accountForm === 'unlock') return this.handleUnlock(form);
         const data = new FormData(form);
         const email = String(data.get('email') ?? '').trim();
@@ -291,9 +291,9 @@ export class AccountModal {
 
     render(): void {
         // Sync status updates re-render the modal — keep whatever is typed into
-        // the key / claim / unlock fields instead of wiping it mid-sentence
-        const typed = this.container.querySelector<HTMLInputElement>('.account-perk input, .account-unlock input');
-        const kept = typed && !this.premium.takeClearInput()
+        // the unlock field (or an add-on's own field) instead of wiping it mid-sentence
+        const typed = this.container.querySelector<HTMLInputElement>('.account-addon input, .account-unlock input');
+        const kept = typed && !this.addon?.clearInputOnRerender()
             ? { name: typed.name, value: typed.value, focused: document.activeElement === typed }
             : null;
 
@@ -312,7 +312,7 @@ export class AccountModal {
         </div>
       </div>`;
         if (kept) {
-            const input = this.container.querySelector<HTMLInputElement>(`.account-perk input[name="${kept.name}"], .account-unlock input[name="${kept.name}"]`);
+            const input = this.container.querySelector<HTMLInputElement>(`.account-addon input[name="${kept.name}"], .account-unlock input[name="${kept.name}"]`);
             if (input) {
                 input.value = kept.value;
                 if (kept.focused) input.focus();
@@ -356,10 +356,10 @@ export class AccountModal {
         return `
       <div class="account-pitch">
         ${signUp
-            ? '<p><strong>Create your free account.</strong> It takes a few seconds and costs nothing. Plans with sync across devices can be added to it any time.</p>'
-            : '<p><strong>Sign in to your account.</strong> Plans with sync keep your grows and photos on phone, tablet and computer.</p>'}
+            ? '<p><strong>Create your free account.</strong> It takes a few seconds and costs nothing — switch sync on afterwards and your grows are on every device.</p>'
+            : '<p><strong>Sign in to your account.</strong> Sync keeps your grows and photos on phone, tablet and computer.</p>'}
         <p class="form-hint">No account needed for the app itself — everything keeps working offline on this device.</p>
-        ${this.premium.renderSignInHint()}
+        ${this.addon?.renderSignInHint() ?? ''}
       </div>
       <form class="account-form" novalidate>
         <div class="form-group">
@@ -396,37 +396,42 @@ export class AccountModal {
 
     private renderAccount(state: SyncState): string {
         const disabled = this.busy ? 'disabled' : '';
-        const ent = state.entitlement;
-        const hasSync = canUseSync(ent);
+        const access = state.access;
+        const hasSync = canUseSync(access);
+        const statusRows = access
+            ? this.addon?.renderStatusRows(access)
+                ?? `<div class="account-row"><span class="account-label">Sync</span><span>${hasSync ? '☁️ On for this account' : 'Not switched on'}</span></div>`
+            : '';
 
         const header = `
       <div class="account-card">
         <div class="account-row"><span class="account-label">Signed in as</span><strong>${this.escapeHtml(state.email ?? '')}</strong></div>
-        <div class="account-row"><span class="account-label">Plan</span>
-          <span class="account-badge ${hasSync && ent?.status !== 'free' ? 'premium' : ''}">${ent ? `${hasSync && ent.status !== 'free' ? '✨' : '🌱'} ${this.escapeHtml(ent.plan_name)}` : '…'}</span>
-        </div>
-        ${ent ? this.premium.renderPlanStatus(ent) : ''}
+        ${statusRows}
       </div>`;
 
         let main = '';
         if (state.status === 'locked') {
             main = this.renderLocked();
-        } else if (!ent) {
-            main = `<p class="form-hint">${state.status === 'offline' ? '📴 Offline — your plan will show when you reconnect.' : 'Loading your plan…'}</p>`;
+        } else if (!access) {
+            main = `<p class="form-hint">${state.status === 'offline' ? '📴 Offline — your account will show when you reconnect.' : 'Loading your account…'}</p>`;
         } else if (!hasSync) {
-            main = this.premium.renderPlanOptions(state.plans, ent);
-        } else if (!this.premium.tiersActive() && !ent.sync_consent_at) {
+            main = this.addon?.renderNoSync(access) ?? `
+        <div class="settings-section">
+          <h4>☁️ Sync across devices</h4>
+          <p class="form-hint">Sync isn't switched on for this account. Your diary keeps working on this device.</p>
+        </div>`;
+        } else if (!this.addon?.limitsAccounts() && !access.sync_consent_at) {
             main = `
         <div class="settings-section">
           <h4>🎁 Sync is free for everyone right now</h4>
-          <p class="modal-info">Sync stores a copy of your grows — notes, dates, plants, reminders and compressed photos (up to ${ent.photo_quota_mb} MB) — on our server so your other devices can load it. Everything is <strong>encrypted on this device first</strong>, with a key only you hold, so we cannot read it. You can delete the synced copy and turn sync off at any time.</p>
+          <p class="modal-info">Sync stores a copy of your grows — notes, dates, plants, reminders and compressed photos (up to ${access.photo_quota_mb} MB) — on our server so your other devices can load it. Everything is <strong>encrypted on this device first</strong>, with a key only you hold, so we cannot read it. You can delete the synced copy and turn sync off at any time.</p>
           <label class="account-consent">
             <input type="checkbox" id="account-consent">
             <span>I agree that my grow diary and photos are stored on the server for syncing.</span>
           </label>
           <button class="btn-primary" data-account-action="consent" ${disabled}>☁️ Turn on sync</button>
         </div>`;
-        } else if (!ent.sync_consent_at) {
+        } else if (!access.sync_consent_at) {
             main = `
         <div class="settings-section">
           <h4>🔐 Before your diary leaves this device</h4>
@@ -448,7 +453,7 @@ export class AccountModal {
             <button class="btn-secondary" data-account-action="new-recovery-key" ${disabled}>🔑 New recovery key</button>
           </div>
           <p class="form-hint">🔐 End-to-end encrypted: your grows and photos are sealed on this device before upload. We cannot read them, and without your password or recovery key neither can anyone else.</p>
-          <p class="form-hint">Changes sync automatically when you're online. Photos are uploaded in a smaller size (up to ${ent.photo_quota_mb} MB); the originals stay on this device.</p>
+          <p class="form-hint">Changes sync automatically when you're online. Photos are uploaded in a smaller size (up to ${access.photo_quota_mb} MB); the originals stay on this device.</p>
         </div>`;
         }
 
@@ -456,11 +461,11 @@ export class AccountModal {
       ${this.renderRecoveryKey(state)}
       ${header}
       ${main}
-      ${ent ? this.premium.renderPerk() : ''}
+      ${access ? this.addon?.renderSection() ?? '' : ''}
       <div class="settings-section account-footer">
         <div class="btn-group">
           <button class="btn-secondary" data-account-action="sign-out">Sign out</button>
-          ${ent?.sync_consent_at ? `<button class="btn-secondary account-danger" data-account-action="delete-synced" ${disabled}>🗑️ Delete synced data</button>` : ''}
+          ${access?.sync_consent_at ? `<button class="btn-secondary account-danger" data-account-action="delete-synced" ${disabled}>🗑️ Delete synced data</button>` : ''}
         </div>
         <button class="link-btn account-danger" data-account-action="delete-account" ${disabled}>Delete my account permanently</button>
         <p class="form-hint">Your diary stays on this device — only the account and its cloud copy go.</p>
