@@ -1,0 +1,48 @@
+# Security headers for the static hosting (Apache / Febas).
+# Vite copies this file to dist/, so it ships with every deploy.
+# On a host that is not Apache, set the same headers there instead.
+
+<IfModule mod_headers.c>
+    # Tell browsers to stay on https for a year (only meaningful once https works everywhere)
+    Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains"
+
+    # No MIME sniffing, no framing, no referrer leaking of grow URLs
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set X-Frame-Options "DENY"
+    Header always set Referrer-Policy "no-referrer"
+    Header always set Cross-Origin-Opener-Policy "same-origin"
+    Header always set Cross-Origin-Resource-Policy "same-site"
+
+    # The app needs none of these
+    Header always set Permissions-Policy "camera=(self), microphone=(), geolocation=(), interest-cohort=()"
+
+    # Everything but Supabase (and Turnstile, if you switch it on) is served from here:
+    # fonts, emoji SVGs and the twemoji script are local, so no third party sees a visitor.
+    Header always set Content-Security-Policy "default-src 'self'; \
+base-uri 'self'; \
+object-src 'none'; \
+script-src 'self' https://challenges.cloudflare.com; \
+style-src 'self' 'unsafe-inline'; \
+font-src 'self'; \
+img-src 'self' data: blob:; \
+connect-src 'self' https://*.supabase.co; \
+frame-src https://challenges.cloudflare.com; \
+frame-ancestors 'none'; \
+form-action 'self'; \
+worker-src 'self'; \
+manifest-src 'self'"
+</IfModule>
+
+# Never let a proxy or browser hold on to the service worker or the HTML shell
+<FilesMatch "(sw\.js|registerSW\.js|index\.html|app\.html|help\.html)$">
+    <IfModule mod_headers.c>
+        Header always set Cache-Control "no-cache, must-revalidate"
+    </IfModule>
+</FilesMatch>
+
+# Hashed assets never change under the same name
+<FilesMatch "\.(js|css|woff2|svg|png)$">
+    <IfModule mod_headers.c>
+        Header set Cache-Control "public, max-age=31536000, immutable"
+    </IfModule>
+</FilesMatch>

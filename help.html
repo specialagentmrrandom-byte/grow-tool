@@ -1,0 +1,836 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#0a0a0a">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>OG Grow Journal Assistant - User Guide</title>
+    <link rel="manifest" href="/manifest.webmanifest">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.svg">
+    <!-- Twemoji, served from this site: no CDN, no third-party request, works offline -->
+    <script src="/emoji/list.js"></script>
+    <script src="/vendor/twemoji.min.js"></script>
+    <style>
+        /* Twemoji styles */
+        img.emoji {
+            height: 1.2em;
+            width: 1.2em;
+            margin: 0 0.05em 0 0.1em;
+            vertical-align: -0.15em;
+            display: inline-block;
+        }
+
+        :root {
+            --color-bg: #0a0a0a;
+            --color-bg-elevated: #1a1a1a;
+            --color-text: #f5f5f5;
+            --color-text-muted: #ccc;
+            --color-border: #333;
+            --color-primary: #22c55e;
+            --color-warning: #eab308;
+            --color-tip-bg: #1a2e1a;
+            --color-warning-bg: #2e2a1a;
+        }
+
+        :root[data-theme="light"] {
+            --color-bg: #f8f9fa;
+            --color-bg-elevated: #ffffff;
+            --color-text: #1a1a1a;
+            --color-text-muted: #6b7280;
+            --color-border: #e5e7eb;
+            --color-primary: #16a34a;
+            --color-warning: #ca8a04;
+            --color-tip-bg: #dcfce7;
+            --color-warning-bg: #fef9c3;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--color-bg);
+            color: var(--color-text);
+            line-height: 1.6;
+            padding: 20px;
+            max-width: 700px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            font-size: 1.8rem;
+            margin-bottom: 20px;
+            color: var(--color-primary);
+        }
+
+        .help-header {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+
+        .help-logo {
+            height: 40px;
+            width: auto;
+            border-radius: 8px;
+        }
+
+        .help-header h1 {
+            margin-bottom: 0;
+        }
+
+        h2 {
+            font-size: 1.4rem;
+            margin: 30px 0 15px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--color-border);
+            color: var(--color-primary);
+        }
+
+        h3 {
+            font-size: 1.1rem;
+            margin: 20px 0 10px;
+            color: var(--color-text);
+        }
+
+        p {
+            margin-bottom: 12px;
+            color: var(--color-text-muted);
+        }
+
+        ul,
+        ol {
+            margin: 12px 0;
+            padding-left: 24px;
+        }
+
+        li {
+            margin-bottom: 8px;
+            color: var(--color-text-muted);
+        }
+
+        strong {
+            color: var(--color-text);
+        }
+
+        code {
+            background: var(--color-bg-elevated);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.9em;
+        }
+
+        pre {
+            background: var(--color-bg-elevated);
+            padding: 16px;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 12px 0;
+            font-size: 0.85rem;
+            line-height: 1.4;
+        }
+
+        .tip {
+            background: var(--color-tip-bg);
+            border-left: 4px solid var(--color-primary);
+            padding: 12px 16px;
+            margin: 16px 0;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .warning {
+            background: var(--color-warning-bg);
+            border-left: 4px solid var(--color-warning);
+            padding: 12px 16px;
+            margin: 16px 0;
+            border-radius: 0 8px 8px 0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 16px 0;
+        }
+
+        th,
+        td {
+            padding: 10px 12px;
+            text-align: left;
+            border-bottom: 1px solid var(--color-border);
+        }
+
+        th {
+            background: var(--color-bg-elevated);
+            color: var(--color-primary);
+        }
+
+        .theme-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--color-bg-elevated);
+            border: 1px solid var(--color-border);
+            border-radius: 8px;
+            padding: 8px 12px;
+            cursor: pointer;
+            font-size: 1.2rem;
+            transition: transform 0.2s;
+        }
+
+        .theme-toggle:hover {
+            transform: scale(1.1);
+        }
+
+        hr {
+            border: none;
+            border-top: 1px solid var(--color-border);
+            margin: 30px 0;
+        }
+
+        .back-link {
+            display: inline-block;
+            margin-bottom: 20px;
+            color: var(--color-primary);
+            text-decoration: none;
+        }
+
+        .back-link:hover {
+            text-decoration: underline;
+        }
+
+        .emoji {
+            font-size: 1.2em;
+        }
+
+        /* Accordion sections */
+        details {
+            margin: 20px 0;
+            border: 1px solid var(--color-border);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        details summary {
+            font-size: 1.4rem;
+            padding: 16px;
+            background: var(--color-bg-elevated);
+            color: var(--color-primary);
+            cursor: pointer;
+            list-style: none;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        details summary::-webkit-details-marker {
+            display: none;
+        }
+
+        details summary::after {
+            content: '+';
+            font-size: 1.5rem;
+            font-weight: 300;
+            transition: transform 0.2s ease;
+        }
+
+        details[open] summary::after {
+            content: '−';
+        }
+
+        details summary:hover {
+            background: var(--color-bg);
+        }
+
+        details .section-content {
+            padding: 20px;
+            border-top: 1px solid var(--color-border);
+        }
+
+        details .section-content>*:first-child {
+            margin-top: 0;
+        }
+
+        details .section-content>*:last-child {
+            margin-bottom: 0;
+        }
+
+        /* Remove old h2 styles since we use summary now */
+        h2 {
+            font-size: 1.4rem;
+            margin: 30px 0 15px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--color-border);
+            color: var(--color-primary);
+        }
+
+        /* Tent Diagram */
+        .demo-tent {
+            background: var(--color-bg-elevated);
+            border: 2px dashed var(--color-border);
+            border-radius: 12px;
+            padding: 20px;
+            margin: 16px 0;
+            position: relative;
+            aspect-ratio: 1;
+            max-width: 280px;
+        }
+
+        .demo-tent-label {
+            position: absolute;
+            top: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--color-bg);
+            padding: 0 8px;
+            font-size: 0.75rem;
+            color: var(--color-text-muted);
+        }
+
+        .demo-tent-grid {
+            position: absolute;
+            inset: 20px;
+            background-image:
+                linear-gradient(to right, var(--color-border) 1px, transparent 1px),
+                linear-gradient(to bottom, var(--color-border) 1px, transparent 1px);
+            background-size: 25% 25%;
+            opacity: 0.3;
+            border-radius: 8px;
+        }
+
+        .demo-pots {
+            position: relative;
+            height: 100%;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .demo-pot {
+            width: 70px;
+            height: 70px;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 2px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+            font-weight: 600;
+        }
+
+        .demo-pot.pot-1 {
+            background: #22c55e;
+        }
+
+        .demo-pot.pot-2 {
+            background: #3b82f6;
+        }
+
+        .demo-pot-number {
+            font-size: 10px;
+            color: rgba(0, 0, 0, 0.7);
+            background: rgba(255, 255, 255, 0.3);
+            padding: 1px 6px;
+            border-radius: 4px;
+        }
+
+        .demo-pot-size {
+            font-size: 12px;
+            color: rgba(0, 0, 0, 0.8);
+        }
+
+        .demo-pot-hint {
+            position: absolute;
+            right: -90px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 0.75rem;
+            color: var(--color-text-muted);
+            white-space: nowrap;
+        }
+
+        /* Timeline Diagram */
+        .demo-timeline {
+            background: var(--color-bg-elevated);
+            border-radius: 12px;
+            padding: 16px;
+            margin: 16px 0;
+        }
+
+        .demo-progress {
+            display: flex;
+            height: 12px;
+            border-radius: 6px;
+            overflow: hidden;
+            margin-bottom: 8px;
+        }
+
+        .demo-progress-segment {
+            height: 100%;
+        }
+
+        .demo-progress-segment.germination {
+            width: 8%;
+            background: #B8A199;
+        }
+
+        .demo-progress-segment.seedling {
+            width: 10%;
+            background: #C4D4A1;
+        }
+
+        .demo-progress-segment.veg {
+            width: 22%;
+            background: #8FB894;
+        }
+
+        .demo-progress-segment.flower {
+            width: 50%;
+            background: #C9A9D1;
+        }
+
+        .demo-progress-segment.flush {
+            width: 7%;
+            background: #E0B084;
+        }
+
+        .demo-progress-segment.harvest {
+            width: 3%;
+            background: #D9C78C;
+        }
+
+        .demo-timeline-labels {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.75rem;
+            color: var(--color-text-muted);
+            margin-bottom: 16px;
+        }
+    </style>
+</head>
+
+<body>
+    <button id="theme-toggle" class="theme-toggle" title="Toggle theme">☀️</button>
+    <a href="app.html" class="back-link">← Back to App</a>
+
+    <div class="help-header">
+        <img src="/logo.png" alt="OG Grow Journal Assistant" class="help-logo">
+        <h1>OG Grow Journal - User Guide</h1>
+    </div>
+    <p>Welcome! This guide will help you track your plants easily.</p>
+
+    <details open>
+        <summary>📱 Getting Started</summary>
+        <div class="section-content">
+            <ol>
+                <li>Tap <strong>+</strong> to create a new grow</li>
+                <li>Enter <strong>strain name</strong> and <strong>plant count</strong></li>
+                <li>Pick <strong>type</strong> (Autoflower/Photoperiod)</li>
+                <li>Set <strong>germination date</strong></li>
+                <li>Choose <strong>veg/flower durations</strong></li>
+                <li>Tap <strong>Save</strong> 🎉</li>
+            </ol>
+        </div>
+    </details>
+
+    <details>
+        <summary>🏕️ Tent View</summary>
+        <div class="section-content">
+            <p><strong>Top-down view</strong> of your grow tent:</p>
+
+            <div class="demo-tent">
+                <span class="demo-tent-label">80×80cm</span>
+                <div class="demo-tent-grid"></div>
+                <div class="demo-pots">
+                    <div class="demo-pot pot-1">
+                        <span class="demo-pot-number">#1</span>
+                        <span class="demo-pot-size">11L</span>
+                    </div>
+                    <div class="demo-pot pot-2">
+                        <span class="demo-pot-number">#2</span>
+                        <span class="demo-pot-size">11L</span>
+                    </div>
+                </div>
+            </div>
+
+            <ul>
+                <li><strong>Colored squares</strong> = Pots (drag to arrange)</li>
+                <li><strong>Red border</strong> = Pot doesn't fit</li>
+            </ul>
+
+            <h3>⚡ Auto-Arrange</h3>
+            <p>Tap <strong>⚡ Arrange</strong> to automatically position all pots:</p>
+            <ul>
+                <li>Optimizes space using smart bin-packing algorithm</li>
+                <li>Places largest pots first, then fits smaller ones</li>
+                <li>Maintains gaps between pots for airflow</li>
+                <li>Tap again to try different arrangements</li>
+            </ul>
+        </div>
+    </details>
+
+    <details>
+        <summary>📅 The Timeline</summary>
+        <div class="section-content">
+            <p>Your grow timeline shows all phases and entries:</p>
+
+            <div class="demo-timeline">
+                <div class="demo-progress">
+                    <div class="demo-progress-segment germination"></div>
+                    <div class="demo-progress-segment seedling"></div>
+                    <div class="demo-progress-segment veg"></div>
+                    <div class="demo-progress-segment flower"></div>
+                    <div class="demo-progress-segment flush"></div>
+                    <div class="demo-progress-segment harvest"></div>
+                </div>
+                <div class="demo-timeline-labels">
+                    <span>🌱 Day 1</span>
+                    <span>Day 90 🎉</span>
+                </div>
+            </div>
+
+            <h3>Phase Colors</h3>
+            <ul>
+                <li>🟣 <strong>Purple</strong> = Germination</li>
+                <li>🟢 <strong>Light Green</strong> = Seedling</li>
+                <li>🟢 <strong>Green</strong> = Vegetative</li>
+                <li>🟣 <strong>Pink</strong> = Flowering</li>
+                <li>🟠 <strong>Orange</strong> = Flush</li>
+                <li>🟡 <strong>Yellow</strong> = Harvest</li>
+            </ul>
+
+            <h3>View Modes</h3>
+            <ul>
+                <li><strong>List view</strong> = Chronological week-by-week</li>
+                <li><strong>Grid view</strong> = Current week prominent, others in 2-column grid</li>
+                <li>Toggle with the 📋/🔲 buttons in the toolbar</li>
+            </ul>
+
+            <h3>Week Navigation</h3>
+            <ul>
+                <li><strong>Tap week headers</strong> to expand/collapse</li>
+                <li><strong>Current week</strong> auto-expands with "TODAY" badge</li>
+                <li><strong>Scroll marker</strong> in progress bar shows your position</li>
+            </ul>
+        </div>
+    </details>
+
+    <details>
+        <summary>🖼️ Photo Gallery & Slideshow</summary>
+        <div class="section-content">
+            <p>View your grow journey as a <strong>fullscreen slideshow</strong>. Tap 🖼️ Gallery in the header.</p>
+
+            <h3>Navigation</h3>
+            <ul>
+                <li><strong>Swipe</strong> left/right or use arrow buttons</li>
+                <li><strong>Dots</strong> at bottom = jump to any slide</li>
+                <li><strong>Keyboard:</strong> ← → arrows, Escape to close</li>
+            </ul>
+
+            <h3>Auto-Play Slideshow</h3>
+            <ul>
+                <li>Tap <strong>▶</strong> to start automatic playback (3-sec per slide)</li>
+                <li>Tap <strong>⏸</strong> or <strong>Space</strong> to pause</li>
+                <li>Great for reviewing progress or showing off your grow!</li>
+            </ul>
+
+            <h3>Phase Timeline</h3>
+            <ul>
+                <li>Colored bar shows all grow phases</li>
+                <li><strong>Moving marker</strong> indicates current slide position</li>
+                <li>See exactly where each photo falls in your grow journey</li>
+            </ul>
+
+            <h3>Slide Info</h3>
+            <p>Each slide shows: Day number, Week, Phase, Entry title & notes</p>
+
+            <div class="tip">
+                <strong>Tip:</strong> Add photos weekly to build an amazing visual timelapse of your grow!
+            </div>
+        </div>
+    </details>
+
+    <details>
+        <summary>✏️ Adding Entries</summary>
+        <div class="section-content">
+            <h3>Quick Way</h3>
+            <p>Tap <strong>+</strong> and choose: 💧 Water, 🌿 Feed, ✂️ Top, 🪴 Transplant, 🍃 Defol, 🌀 LST, 🌸
+                Pistils, 🚿 Flush</p>
+
+            <h3>Detailed Entry</h3>
+            <p>Tap any <strong>day</strong> on timeline → fill title, notes, photo → Save</p>
+        </div>
+    </details>
+
+
+    <details>
+        <summary>⏰ Setting Reminders</summary>
+        <div class="section-content">
+            <p>Keep track of important tasks:</p>
+            <ol>
+                <li>Open a grow → Tap ⚙️ Settings</li>
+                <li>Tap "Reminders"</li>
+                <li>Add task, date, and buffer days (1-7 early notification)</li>
+                <li>Save and get notified in advance</li>
+            </ol>
+            <p>When a reminder appears, <strong>mark it as done</strong> to complete the task or
+                <strong>dismiss</strong> it if not needed. Perfect for staying on top of watering, feeding, and
+                milestones.
+            </p>
+        </div>
+    </details>
+
+
+    <details>
+        <summary>💡 Quick Tips</summary>
+        <div class="section-content">
+            <ul>
+                <li><strong>DLI Calculator:</strong> In the entry form, click the 💡 Calc button next to DLI to open the
+                    calculator. Enter PPFD and hours, then "Use This Value" to set it automatically.</li>
+                <li><strong>Photos:</strong> Add weekly for an amazing timelapse in the gallery</li>
+                <li><strong>Quick add:</strong> Use the + button shortcuts instead of typing</li>
+                <li><strong>Multiple plants:</strong> Select which plant each note is about</li>
+                <li><strong>Grid view:</strong> Great for seeing the current week at a glance</li>
+                <li><strong>Reports:</strong> Generate a shareable HTML report of your entire grow</li>
+                <li><strong>Reminders:</strong> Set buffer days for tasks like watering and feeding to stay on schedule
+                </li>
+            </ul>
+        </div>
+    </details>
+
+    <details>
+        <summary>💾 Export & Reports</summary>
+        <div class="section-content">
+            <p>Your data saves <strong>automatically</strong> in the browser.</p>
+
+            <h3>📤 Export Options</h3>
+            <p>Tap <strong>📤 Export</strong> in the grow header:</p>
+
+            <h4>📊 Full HTML Report</h4>
+            <ul>
+                <li><strong>Standalone webpage</strong> - works offline, share anywhere</li>
+                <li><strong>Cover section</strong> with strain, dates, and key stats</li>
+                <li><strong>Journey overview</strong> - timeline of all phases</li>
+                <li><strong>Plant cards</strong> with individual details</li>
+                <li><strong>Statistics</strong> - entry counts, activity breakdown</li>
+                <li><strong>Phase-by-phase story</strong> with all entries and photos</li>
+                <li><strong>Photo gallery</strong> grid with all grow images</li>
+                <li><strong>Lessons learned</strong> section for notes</li>
+            </ul>
+
+            <h4>📝 Markdown Export</h4>
+            <ul>
+                <li>Forum-ready format for grow diaries</li>
+                <li>Copy/paste to Reddit, forums, Discord</li>
+                <li>Image placeholders for manual upload</li>
+            </ul>
+
+            <h3>💾 Backup & Restore</h3>
+            <ul>
+                <li><strong>Backup:</strong> Settings ⚙️ → Download JSON</li>
+                <li><strong>Restore:</strong> Settings ⚙️ → Import Backup</li>
+            </ul>
+        </div>
+    </details>
+
+    <details>
+        <summary>☁️ Sync across devices (optional)</summary>
+        <div class="section-content">
+            <p>
+                The diary works completely without an account — that stays true. Sync is an
+                <strong>extra you switch on yourself</strong> if you want the same diary on your phone,
+                tablet and computer, and a copy that survives a lost phone or a cleared browser.
+            </p>
+
+            <h3>🔐 What happens to your data</h3>
+            <ul>
+                <li><strong>Encrypted on your device</strong> before anything is uploaded (AES-256), with a key
+                    derived from your password.</li>
+                <li><strong>We cannot read your diary.</strong> Not the notes, not the photos. What lies on the
+                    server is a block of ciphertext — also for anyone who ever got hold of that database.</li>
+                <li><strong>Servers in the EU</strong> (Frankfurt). Only your email address is needed, no real name.</li>
+                <li><strong>You are asked first:</strong> nothing is uploaded until you tick the consent box.</li>
+            </ul>
+
+            <h3>🔑 Your recovery key</h3>
+            <p>
+                When you turn sync on, the app shows a recovery key once — it looks like
+                <code>RCVR-XXXXX-XXXXX-XXXXX-XXXXX</code>. Write it down.
+            </p>
+            <ul>
+                <li>It is the <strong>only way back into the cloud copy</strong> if you forget your password.</li>
+                <li>Not even we can reopen it for you — that is the point of the encryption.</li>
+                <li>Lost both? Your diary on your devices is untouched. The app offers to throw the unreadable
+                    copy away and start a fresh one.</li>
+                <li>You can hand yourself a new key any time: Settings ⚙️ → ☁️ Sync → 🔑 New recovery key.</li>
+            </ul>
+
+            <h3>📱 Setting it up</h3>
+            <ul>
+                <li>Settings ⚙️ → <strong>☁️ Sync across devices</strong> → create a free account</li>
+                <li>Tick the consent box → the first upload starts, photos are compressed on the way</li>
+                <li>On the second device: sign in, enter your password once to unlock the copy — your grows arrive</li>
+            </ul>
+            <div class="tip">
+                💡 Changing your password later? The cloud copy stays readable and nothing is re-uploaded.
+            </div>
+
+            <h3>🗑️ Turning it off again</h3>
+            <ul>
+                <li><strong>Delete synced data:</strong> removes the copy and the photos from the server. Everything
+                    on your devices stays exactly as it is.</li>
+                <li><strong>Delete my account permanently:</strong> account, cloud copy and photos are gone for good.
+                    Your diary stays on your devices.</li>
+                <li>Switch sync off and the copy is deleted by itself after 60 days.</li>
+            </ul>
+            <div class="tip">
+                🌱 Sync is a safety net, not a requirement. Without an account nothing ever leaves your device —
+                and the JSON backup (Settings ⚙️ → Download JSON) keeps working either way.
+            </div>
+        </div>
+    </details>
+
+    <details>
+        <summary>❓ FAQ</summary>
+        <div class="section-content">
+            <p><strong>Where is data saved?</strong> → In your browser, persists between sessions</p>
+            <p><strong>Works on mobile?</strong> → Yes, phones, tablets, computers</p>
+            <p><strong>Delete a grow?</strong> → Open grow → 🗑️ trash icon</p>
+            <p><strong>Edit an entry?</strong> → Tap it in the timeline</p>
+            <p><strong>Red pot border?</strong> → Pot too big, resize or move it</p>
+            <p><strong>Do I need an account?</strong> → No. Everything works offline without one; sync is optional</p>
+            <p><strong>Can you read my diary when I sync?</strong> → No, it is encrypted on your device first</p>
+            <p><strong>Forgot my password?</strong> → Reset it, then unlock the cloud copy with your recovery key</p>
+            <p><strong>Lost the recovery key too?</strong> → Your diary on this device is fine; start a fresh cloud copy</p>
+        </div>
+    </details>
+
+    <details>
+        <summary>🆘 Troubleshooting</summary>
+        <div class="section-content">
+            <p><strong>App not working?</strong> → Refresh page (F5 or pull down)</p>
+            <p><strong>Lost data?</strong> → Restore from Settings → Import Backup</p>
+            <p><strong>"Unlock your cloud copy"?</strong> → This device has no key yet — enter your password, or your recovery key</p>
+            <p><strong>Sync says "offline"?</strong> → Nothing is lost, it catches up by itself once you are back online</p>
+        </div>
+    </details>
+
+    <details>
+        <summary>🌳 Forum &amp; Community</summary>
+        <div class="section-content">
+            <p>
+                OG Grow Journal Assistant is part of the
+                <a href="https://overgrow.com" target="_blank" rel="noopener"
+                    style="color: var(--color-primary); font-weight: 600;">Overgrow</a>
+                growing community — one of the oldest and friendliest places on the web to talk about growing.
+            </p>
+            <p><strong>Questions, feedback, or want to show off your grow?</strong> Head over to
+                <a href="https://overgrow.com" target="_blank" rel="noopener"
+                    style="color: var(--color-primary); font-weight: 600;">overgrow.com</a>
+                and join the conversation with fellow growers.</p>
+            <p><strong>Share a grow in one tap:</strong> open a grow → 📤 <strong>Export</strong> →
+                <strong>Post to Overgrow</strong>. The app pre-fills a forum topic with your grow report,
+                photos placeholders, and stats — you just review and post.</p>
+            <div class="tip">
+                🌱 New to Overgrow? It's free to join, and growers there are happy to help beginners.
+            </div>
+        </div>
+    </details>
+
+    <hr>
+
+    <p style="text-align: center;">
+        🌳 Part of the
+        <a href="https://overgrow.com" target="_blank" rel="noopener"
+            style="color: var(--color-primary); font-weight: 600;">Overgrow</a>
+        community
+    </p>
+
+    <p style="text-align: center; margin-top: 20px;">
+        <strong>Quick Reference:</strong> ➕ Add entries · 📅 Timeline · 🖼️ Gallery · 📤 Export · 💾 Backup · ☁️ Sync
+    </p>
+
+    <p style="font-size: 1.5rem; text-align: center; margin-top: 20px;">Happy growing! 🌱</p>
+
+    <p style="text-align: center; margin-top: 40px;">
+        <a href="app.html" class="back-link">← Back to App</a>
+    </p>
+
+    <script>
+        // Theme management
+        const THEME_KEY = 'og-grow-theme';
+        const THEME_ATTR = 'data-theme';
+
+        function getPreferredTheme() {
+            const stored = localStorage.getItem(THEME_KEY);
+            if (stored === 'light' || stored === 'dark') {
+                return stored;
+            }
+            if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) {
+                return 'light';
+            }
+            return 'dark';
+        }
+
+        function applyTheme(theme) {
+            document.documentElement.setAttribute(THEME_ATTR, theme);
+            localStorage.setItem(THEME_KEY, theme);
+            updateThemeIcon(theme);
+            // Update meta theme-color
+            const metaThemeColor = document.querySelector('meta[name="theme-color"]');
+            if (metaThemeColor) {
+                metaThemeColor.setAttribute('content', theme === 'light' ? '#f8f9fa' : '#0a0a0a');
+            }
+        }
+
+        function updateThemeIcon(theme) {
+            const toggle = document.getElementById('theme-toggle');
+            if (toggle) {
+                toggle.textContent = theme === 'light' ? '🌙' : '☀️';
+            }
+        }
+
+        function toggleTheme() {
+            const current = document.documentElement.getAttribute(THEME_ATTR) || 'dark';
+            const next = current === 'light' ? 'dark' : 'light';
+            applyTheme(next);
+        }
+
+        // Initialize theme immediately
+        applyTheme(getPreferredTheme());
+
+        // Theme toggle button
+        const themeToggle = document.getElementById('theme-toggle');
+        if (themeToggle) {
+            themeToggle.addEventListener('click', toggleTheme);
+        }
+
+        // Listen for theme changes from other tabs
+        window.addEventListener('storage', (e) => {
+            if (e.key === THEME_KEY && (e.newValue === 'light' || e.newValue === 'dark')) {
+                applyTheme(e.newValue);
+            }
+        });
+
+        // Parse emojis with Twemoji
+        if (window.twemoji) {
+            twemoji.parse(document.body, {
+                base: '/emoji/', folder: 'svg', ext: '.svg',
+                // only what this site ships; anything else stays as the system's emoji
+                callback: (icon) => (window.GROW_EMOJI?.has(icon) ? `/emoji/svg/${icon}.svg` : false),
+            });
+        }
+    </script>
+</body>
+
+</html>

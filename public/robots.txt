@@ -1,0 +1,5 @@
+# OG Grow Journal Assistant — https://grow.rafime.de
+User-agent: *
+Allow: /
+
+Sitemap: https://grow.rafime.de/sitemap.xml

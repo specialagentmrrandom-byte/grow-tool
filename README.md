@@ -12,9 +12,27 @@ Part of the [Overgrow](https://overgrow.com) growing community.
 
 ## About this repository
 
-This is the **public source** of OG Grow Journal Assistant: the app code plus its unit and end-to-end tests. It is updated automatically whenever the app changes, so what you see here is what runs in the app.
+This is the **public source** of OG Grow Journal Assistant: the app, its assets and its tests. It is updated automatically whenever the app changes, so what you see here is what runs on [grow.rafime.de](https://grow.rafime.de).
 
-It contains the source only — build tooling, assets and hosting config aren't included, so this repo is meant for reading, reviewing and reusing code rather than running the app as-is.
+It is a working copy, not just a read-only dump — clone it and it runs:
+
+```bash
+npm install
+npm run dev          # http://localhost:5173  (landing page → /app.html)
+npm test             # unit tests (Vitest)
+npm run test:e2e     # end-to-end tests (Playwright, needs `npx playwright install`)
+npm run build        # production build into dist/
+```
+
+No configuration is needed. The app is offline-first and keeps everything on the
+device, so it works with no server at all. Only the optional sync talks to one:
+copy `.env.example` to `.env.local` and point it at your own Supabase project if
+you want to work on that part — see `src/sync/` and the account dialog.
+
+What is *not* here: the deployment workflows and the hosting config of the live
+site, the database migrations behind the optional sync, and one optional add-on
+that is specific to the hosted version (`src/accountAddon.ts` explains the
+extension point it plugs into — this build simply has none).
 
 ## What the app does
 
