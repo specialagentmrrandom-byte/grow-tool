@@ -1,3 +1,5 @@
+import { paletteColor } from '@rafime/codex';
+
 // Phase types
 export type Phase = 'germination' | 'seedling' | 'veg' | 'flower' | 'flush' | 'harvest' | 'complete';
 export type GrowType = 'auto' | 'photo';
@@ -190,17 +192,15 @@ export const TENT_SIZES = [
     { label: '120×60cm', width: 120, depth: 60 },
 ] as const;
 
-// Auto-generate plant colors - Pastel earthy palette
-export const PLANT_COLORS = [
-    '#8FB894', // soft jade
-    '#9CB3C0', // dusty blue
-    '#E0B084', // warm sand
-    '#D9A5B3', // dusty rose
-    '#C9A9D1', // dusty lavender
-    '#D9C78C', // golden wheat
-    '#A8BCAD', // sage mint
-    '#D4A89E', // terracotta
-] as const;
+/** `var(--grow-<role>, <paper hex>)` for a role of the Codex grow palette. */
+export function codexColor(role: string): string {
+    return `var(--grow-${role}, ${paletteColor('grow', role, 'paper', 'grow')})`;
+}
+
+// Plant colours — the eight plant pigments of the Codex grow palette.
+// Each value is a CSS variable with the paper-theme colour as fallback, so the
+// app follows light/dark while exported reports (no Codex CSS) still get a colour.
+export const PLANT_COLORS = [1, 2, 3, 4, 5, 6, 7, 8].map((n) => codexColor(`plant-${n}`));
 
 // Main grow data structure
 export interface Grow {
@@ -225,6 +225,7 @@ export interface Settings {
     defaultLight: LightSettings;
     theme: 'auto' | 'dark' | 'light';  // Theme preference: auto = follow system
     lastReminderCheck?: string;  // ISO date of last reminder check
+    wheelView?: 'wheel' | 'calendar' | 'timeline';  // the grow disc's view: wheel, calendar or timeline
 }
 
 // Full store data
@@ -346,15 +347,15 @@ export const DLI_TARGETS_GRANULAR: Record<string, { auto: DLITarget; photo: DLIT
     },
 };
 
-// Phase colors for UI - Pastel earthy tones
+// Phase colours — pigments from the Codex grow palette (see PLANT_COLORS)
 export const PHASE_COLORS: Record<Phase, string> = {
-    germination: '#B8A199', // warm taupe
-    seedling: '#C4D4A1',    // sage green
-    veg: '#8FB894',         // soft jade
-    flower: '#C9A9D1',      // dusty lavender
-    flush: '#E0B084',       // warm sand
-    harvest: '#D9C78C',     // golden wheat
-    complete: '#9CA3A8',    // soft slate
+    germination: codexColor('phase-germination'), // sepia
+    seedling: codexColor('phase-seedling'),       // sap green
+    veg: codexColor('phase-veg'),                 // moss
+    flower: codexColor('phase-flower'),           // plum
+    flush: codexColor('phase-flush'),             // slate — water only
+    harvest: codexColor('phase-harvest'),         // ochre ink
+    complete: codexColor('phase-complete'),       // ink
 };
 
 // Helper to generate unique IDs
@@ -501,7 +502,8 @@ export const DEFAULT_STORE_DATA: StoreData = {
     version: 1,
 };
 
-// Generate a consistent, subtle background color for a grow based on its ID
+// A consistent, faint tint for a grow based on its ID. Mixed into the paper,
+// so it reads the same on the light and the dark Codex sheet.
 export function getGrowColor(id: string): string {
     let hash = 0;
     for (let i = 0; i < id.length; i++) {
@@ -509,5 +511,5 @@ export function getGrowColor(id: string): string {
         hash = hash & hash;
     }
     const hue = Math.abs(hash) % 360;
-    return `hsla(${hue}, 30%, 20%, 1)`;
+    return `color-mix(in srgb, hsl(${hue} 30% 40%) 12%, var(--cx-paper, #dcd5ab))`;
 }

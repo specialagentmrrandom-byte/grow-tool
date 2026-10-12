@@ -51,12 +51,14 @@ test.describe('Grow creation', () => {
         await openApp(page);
         await page.locator('.new-grow-btn').first().click();
 
-        await page.locator('.segment[data-type="auto"]').click();
+        // the type is a pair of Codex chips (.segmented-control) over a hidden input
+        await page.locator('.segmented-control [data-type="auto"]').click();
+        await expect(page.locator('.segmented-control [data-type="auto"]')).toHaveAttribute('aria-pressed', 'true');
         await expect(page.locator('#grow-type')).toHaveValue('auto');
         await expect(page.locator('#veg-weeks')).toBeHidden();
 
         // Switching back restores it with a sane default
-        await page.locator('.segment[data-type="photo"]').click();
+        await page.locator('.segmented-control [data-type="photo"]').click();
         await expect(page.locator('#veg-weeks')).toBeVisible();
         await expect(page.locator('#veg-weeks')).toHaveValue('3');
     });

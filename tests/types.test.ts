@@ -15,7 +15,7 @@ const PHASES: Phase[] = ['germination', 'seedling', 'veg', 'flower', 'flush', 'h
 describe('domain tables', () => {
     it('has a colour and a light target for every phase', () => {
         for (const phase of PHASES) {
-            expect(PHASE_COLORS[phase], phase).toMatch(/^#[0-9A-Fa-f]{6}$/);
+            expect(PHASE_COLORS[phase], phase).toMatch(/^var\(--grow-phase-[a-z]+, #[0-9a-f]{6}\)$/);
             expect(DLI_TARGETS[phase], phase).toBeDefined();
             expect(DLI_TARGETS[phase].max).toBeGreaterThanOrEqual(DLI_TARGETS[phase].min);
         }

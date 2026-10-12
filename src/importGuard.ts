@@ -214,6 +214,7 @@ function settings(raw: unknown, fallback: Settings): Settings {
         },
         theme: oneOf(raw.theme, ['auto', 'dark', 'light'] as const, fallback.theme),
         ...(isoDate(raw.lastReminderCheck) && { lastReminderCheck: isoDate(raw.lastReminderCheck) }),
+        ...(['wheel', 'calendar', 'timeline'].includes(raw.wheelView as string) && { wheelView: raw.wheelView as Settings['wheelView'] }),
     };
 }
 

@@ -42,7 +42,8 @@ export function applyTheme(theme: Theme): void {
     // Update meta theme-color for mobile browsers
     const metaThemeColor = document.querySelector('meta[name="theme-color"]');
     if (metaThemeColor) {
-        metaThemeColor.setAttribute('content', theme === 'light' ? '#f8f9fa' : '#0a0a0a');
+        // Codex paper / night sheet
+        metaThemeColor.setAttribute('content', theme === 'light' ? '#dcd5ab' : '#1c1a10');
     }
 
     // Dispatch custom event for theme change

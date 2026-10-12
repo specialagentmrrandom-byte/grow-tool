@@ -216,7 +216,7 @@ export class GrowForm {
     const defaultStrain = (this.container.querySelector('#strain') as HTMLInputElement)?.value ?? '';
 
     const headerHtml = this.plants.length > 0 ? `
-      <div class="plant-row plant-row-header">
+      <div class="plant-row plant-row-header cx-label">
         <span class="plant-col-header">#</span>
         <span class="plant-col-header">Name</span>
         <span class="plant-col-header">Strain</span>
@@ -227,24 +227,24 @@ export class GrowForm {
     ` : '';
 
     plantsContainer.innerHTML = headerHtml + this.plants.map((plant, index) => `
-            <div class="plant-row" data-plant-id="${plant.id}">
+            <div class="plant-row cx-tile" data-plant-id="${plant.id}">
                 <span class="plant-pot-badge" style="background: ${PLANT_COLORS[index % PLANT_COLORS.length]}">#${plant.potNumber}</span>
                 <input 
                     type="text" 
-                    class="plant-name-input" 
+                    class="plant-name-input cx-input" 
                     data-plant-id="${plant.id}"
                     value="${this.escapeHtml(plant.name)}"
                     placeholder="Plant name"
                 >
                 <input 
                     type="text" 
-                    class="plant-strain-input" 
+                    class="plant-strain-input cx-input" 
                     data-plant-id="${plant.id}"
                     value="${this.escapeHtml(plant.strain || defaultStrain)}"
                     placeholder="Strain"
                     list="strain-list"
                 >
-                <select class="plant-seed-type" data-plant-id="${plant.id}" title="Seed type">
+                <select class="plant-seed-type cx-input" data-plant-id="${plant.id}" title="Seed type">
                     <option value="feminized" ${plant.seedType === 'feminized' || !plant.seedType ? 'selected' : ''}>feminized</option>
                     <option value="regular" ${plant.seedType === 'regular' ? 'selected' : ''}>regular</option>
                     <option value="experimental" ${plant.seedType === 'experimental' ? 'selected' : ''}>experimental</option>
@@ -252,7 +252,7 @@ export class GrowForm {
                 <div class="pot-size-slider-container">
                     <input 
                         type="range" 
-                        class="plant-pot-slider" 
+                        class="plant-pot-slider cx-range" 
                         data-plant-id="${plant.id}"
                         min="3" 
                         max="50" 
@@ -260,7 +260,7 @@ export class GrowForm {
                         value="${plant.potLiters || 11}"
                         title="Pot size in liters"
                     >
-                    <span class="pot-size-display">${plant.potLiters || 11}L</span>
+                    <span class="pot-size-display cx-num">${plant.potLiters || 11}L</span>
                 </div>
                 <button type="button" class="remove-plant-btn icon-btn" data-remove-plant="${plant.id}" title="Remove">×</button>
             </div>
@@ -322,13 +322,14 @@ export class GrowForm {
         <div class="form-body">
           <!-- Basic Info Section -->
           <section class="form-section">
-            <div class="form-card">
+            <div class="form-card cx-sheet">
               <div class="form-row">
-                <div class="form-group">
-                  <label for="strain">🌿 Grow Name</label>
+                <div class="form-group cx-field">
+                  <label class="cx-field__label" for="strain">🌿 Grow Name</label>
                   <input 
                     type="text" 
                     id="strain" 
+                    class="cx-input"
                     name="strain" 
                     list="strain-list"
                     value="${randomStrain}"
@@ -340,11 +341,11 @@ export class GrowForm {
                   </datalist>
                 </div>
                 
-                <div class="form-group">
-                  <label for="grow-type">Type</label>
-                  <div class="segmented-control">
-                    <button type="button" class="segment ${grow?.type === 'auto' ? 'active' : ''}" data-type="auto">🌱 Automatics</button>
-                    <button type="button" class="segment ${!grow || grow?.type === 'photo' ? 'active' : ''}" data-type="photo">💡 Photoflowering</button>
+                <div class="form-group cx-field">
+                  <label class="cx-field__label" for="grow-type">Type</label>
+                  <div class="segmented-control cx-chips" role="group" aria-label="Grow type">
+                    <button type="button" class="cx-chip" data-type="auto" aria-pressed="${grow?.type === 'auto'}">🌱 Automatics</button>
+                    <button type="button" class="cx-chip" data-type="photo" aria-pressed="${!grow || grow?.type === 'photo'}">💡 Photoflowering</button>
                   </div>
                   <input type="hidden" id="grow-type" name="type" value="${grow?.type ?? 'photo'}">
                 </div>
@@ -354,17 +355,17 @@ export class GrowForm {
           
           <!-- Schedule Section -->
           <section class="form-section">
-            <h3 class="section-title">📅 Schedule
+            <h3 class="section-title cx-eyebrow">📅 Schedule
               <span class="tooltip">
                 <span class="tooltip-icon">i</span>
                 <span class="tooltip-text">Set your grow timeline. Adjust weeks for each phase to match your strain's needs.</span>
               </span>
             </h3>
-            <div class="form-card">
+            <div class="form-card cx-sheet">
               <div class="date-row">
-                <div class="form-group">
-                  <label for="germ-start">Germination Start</label>
-                  <input type="date" id="germ-start" name="germStart" value="${grow?.dates.germStart ?? today}" required>
+                <div class="form-group cx-field">
+                  <label class="cx-field__label" for="germ-start">Germination Start</label>
+                  <input type="date" class="cx-input" id="germ-start" name="germStart" value="${grow?.dates.germStart ?? today}" required>
                 </div>
                 <div class="date-preview" id="date-preview">
                   <!-- Calculated dates will appear here -->
@@ -372,34 +373,34 @@ export class GrowForm {
               </div>
               
               <div class="form-row">
-                <div class="form-group">
-                  <label for="seedling-days">Seedling Days</label>
-                  <div class="input-with-unit">
-                    <input type="range" id="seedling-days" name="seedlingDays" min="5" max="10" value="${this.seedlingDays}">
+                <div class="form-group cx-field">
+                  <label class="cx-field__label" for="seedling-days">Seedling Days</label>
+                  <div class="range-with-value">
+                    <input type="range" class="cx-range" id="seedling-days" name="seedlingDays" min="5" max="10" value="${this.seedlingDays}">
                     <span class="input-unit">${this.seedlingDays}d</span>
                   </div>
                 </div>
-                <div class="form-group">
-                  <label for="veg-weeks">Veg Weeks</label>
-                  <div class="input-with-unit">
-                    <input type="range" id="veg-weeks" name="vegWeeks" min="0" max="6" value="${this.vegWeeks}">
+                <div class="form-group cx-field">
+                  <label class="cx-field__label" for="veg-weeks">Veg Weeks</label>
+                  <div class="range-with-value">
+                    <input type="range" class="cx-range" id="veg-weeks" name="vegWeeks" min="0" max="6" value="${this.vegWeeks}">
                     <span class="input-unit">${this.vegWeeks}w</span>
                   </div>
                 </div>
               </div>
               
               <div class="form-row">
-                <div class="form-group">
-                  <label for="flower-weeks">Flower Weeks</label>
-                  <div class="input-with-unit">
-                    <input type="range" id="flower-weeks" name="flowerWeeks" min="7" max="12" value="${this.flowerWeeks}">
+                <div class="form-group cx-field">
+                  <label class="cx-field__label" for="flower-weeks">Flower Weeks</label>
+                  <div class="range-with-value">
+                    <input type="range" class="cx-range" id="flower-weeks" name="flowerWeeks" min="7" max="12" value="${this.flowerWeeks}">
                     <span class="input-unit">${this.flowerWeeks}w</span>
                   </div>
                 </div>
-                <div class="form-group">
-                  <label for="flush-days">Flush Days</label>
-                  <div class="input-with-unit">
-                    <input type="range" id="flush-days" name="flushDays" min="7" max="14" value="${this.flushDays}">
+                <div class="form-group cx-field">
+                  <label class="cx-field__label" for="flush-days">Flush Days</label>
+                  <div class="range-with-value">
+                    <input type="range" class="cx-range" id="flush-days" name="flushDays" min="7" max="14" value="${this.flushDays}">
                     <span class="input-unit">${this.flushDays}d</span>
                   </div>
                 </div>
@@ -409,19 +410,20 @@ export class GrowForm {
           
           <!-- Grow Space Section -->
           <section class="form-section">
-            <h3 class="section-title">🏕️ Grow Space</h3>
-            <div class="form-card">
+            <h3 class="section-title cx-eyebrow">🏕️ Grow Space</h3>
+            <div class="form-card cx-sheet">
               <!-- Tent Subsection -->
               <div class="subsection">
-                <h4 class="subsection-title">🏕️ Tent</h4>
+                <h4 class="subsection-title cx-label">🏕️ Tent</h4>
                 <div class="tent-layout-row">
                   <div class="tent-controls">
-                    <div class="form-group">
-                      <label>Size Preset</label>
-                      <div class="preset-pills">
+                    <div class="form-group cx-field">
+                      <span class="cx-field__label">Size Preset</span>
+                      <div class="preset-pills cx-chips" role="group" aria-label="Tent size">
                         ${TENT_SIZES.map((tent, i) => `
                           <button type="button" 
-                                  class="preset-pill ${tent.width === this.tentConfig.width && tent.depth === this.tentConfig.depth ? 'active' : ''}" 
+                                  class="cx-chip" 
+                                  aria-pressed="${tent.width === this.tentConfig.width && tent.depth === this.tentConfig.depth}"
                                   data-tent-preset="${i}">
                             ${tent.label}
                           </button>
@@ -429,25 +431,25 @@ export class GrowForm {
                       </div>
                     </div>
                     
-                    <div class="form-group">
-                      <label for="tent-width">Width</label>
+                    <div class="form-group cx-field">
+                      <label class="cx-field__label" for="tent-width">Width</label>
                       <div class="input-with-unit">
-                        <input type="number" id="tent-width" name="tentWidth" min="40" max="300" value="${this.tentConfig.width}">
+                        <input type="number" class="cx-input" id="tent-width" name="tentWidth" min="40" max="300" value="${this.tentConfig.width}">
                         <span class="input-unit">cm</span>
                       </div>
                     </div>
                     
-                    <div class="form-group">
-                      <label for="tent-depth">Depth</label>
+                    <div class="form-group cx-field">
+                      <label class="cx-field__label" for="tent-depth">Depth</label>
                       <div class="input-with-unit">
-                        <input type="number" id="tent-depth" name="tentDepth" min="40" max="300" value="${this.tentConfig.depth}">
+                        <input type="number" class="cx-input" id="tent-depth" name="tentDepth" min="40" max="300" value="${this.tentConfig.depth}">
                         <span class="input-unit">cm</span>
                       </div>
                     </div>
                   </div>
                   
                   <div class="tent-planner-section">
-                    <h4 class="subsection-title">📐 Tent Layout
+                    <h4 class="subsection-title cx-label">📐 Tent Layout
                       <span class="tooltip">
                         <span class="tooltip-icon">i</span>
                         <span class="tooltip-text">Drag pots to position them in your tent. Use auto-arrange for optimal spacing.</span>
@@ -544,14 +546,13 @@ export class GrowForm {
   }
 
   private setupTypeSegments(): void {
-    this.container.querySelectorAll('.segment[data-type]').forEach(btn => {
+    this.container.querySelectorAll('.segmented-control [data-type]').forEach(btn => {
       btn.addEventListener('click', () => {
         const type = btn.getAttribute('data-type');
         const hiddenInput = this.container.querySelector('#grow-type') as HTMLInputElement;
         if (hiddenInput && type) {
           hiddenInput.value = type;
-          this.container.querySelectorAll('.segment[data-type]').forEach(b => b.classList.remove('active'));
-          btn.classList.add('active');
+          this.container.querySelectorAll('.segmented-control [data-type]').forEach(b => b.setAttribute('aria-pressed', String(b === btn)));
           this.updateTypeFields();
           this.updateDatePreview();
         }
@@ -598,7 +599,7 @@ export class GrowForm {
     this.container.querySelectorAll('[data-tent-preset]').forEach(btn => {
       const index = parseInt(btn.getAttribute('data-tent-preset')!, 10);
       const preset = TENT_SIZES[index];
-      btn.classList.toggle('active', preset.width === this.tentConfig.width && preset.depth === this.tentConfig.depth);
+      btn.setAttribute('aria-pressed', String(preset.width === this.tentConfig.width && preset.depth === this.tentConfig.depth));
     });
   }
 
@@ -624,33 +625,33 @@ export class GrowForm {
 
     previewEl.innerHTML = `
       <div class="date-preview-header">
-        <strong>📅 Calculated Schedule</strong>
-        <span class="total-days">${totalDays}<span class="stat-unit">d</span> total</span>
+        <span class="cx-eyebrow">📅 Calculated Schedule</span>
+        <span class="total-days cx-num">${totalDays}<span class="stat-unit">d</span> total</span>
       </div>
       <div class="date-preview-grid">
-        <div class="date-item">
+        <div class="date-item cx-tile">
           <span class="date-icon">🌱</span>
           <span class="date-label">Sprout</span>
           <span class="date-value">${formatDate(dates.sprout!)}</span>
         </div>
         ${dates.vegStart ? `
-        <div class="date-item">
+        <div class="date-item cx-tile">
           <span class="date-icon">🌿</span>
           <span class="date-label">Veg Start</span>
           <span class="date-value">${formatDate(dates.vegStart)} <span class="phase-duration">(${this.vegWeeks}w)</span></span>
         </div>
         ` : ''}
-        <div class="date-item">
+        <div class="date-item cx-tile">
           <span class="date-icon">🌸</span>
           <span class="date-label">${type === 'photo' ? 'Flip to Flower' : 'Flower Start'}</span>
           <span class="date-value">${formatDate(dates.flowerStart!)} <span class="phase-duration">(${this.flowerWeeks}w)</span></span>
         </div>
-        <div class="date-item">
+        <div class="date-item cx-tile">
           <span class="date-icon">🚿</span>
           <span class="date-label">Flush Start</span>
           <span class="date-value">${formatDate(dates.flushStart!)} <span class="phase-duration">(${this.flushDays}d)</span></span>
         </div>
-        <div class="date-item highlight">
+        <div class="date-item cx-tile highlight">
           <span class="date-icon">🎉</span>
           <span class="date-label">Harvest</span>
           <span class="date-value">${formatDate(dates.harvest!)}</span>

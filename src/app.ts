@@ -1,6 +1,7 @@
 import { type Grow, type Entry, type EntryType, getGrowColor } from './types';
 import { store } from './store';
-import { Timeline } from './timeline';
+import { GrowDisc } from './components/GrowDisc';
+import { growSeal } from './seal';
 import { Dashboard, GrowForm, EntryForm, ExportModal, GalleryModal, DLICalculatorModal, TentLayoutModal, ReminderBar, QuickLogSheet, AccountModal } from './components/index';
 import { isSyncConfigured } from './sync/config';
 import { auth } from './sync/auth';
@@ -23,7 +24,7 @@ export class App {
     private dashboard: Dashboard | null = null;
     private growForm: GrowForm | null = null;
     private entryForm: EntryForm | null = null;
-    private timeline: Timeline | null = null;
+    private disc: GrowDisc | null = null;
     private tentLayoutModal: TentLayoutModal | null = null;
     private exportModal: ExportModal | null = null;
     private galleryModal: GalleryModal | null = null;
@@ -101,7 +102,7 @@ export class App {
                     return;
                 }
                 this.currentGrow = grow;
-                this.timeline?.render(grow);
+                this.disc?.render(grow);
             } else {
                 this.dashboard?.render();
             }
@@ -424,20 +425,20 @@ export class App {
       <div class="modal modal-grow" role="dialog" aria-modal="true" aria-labelledby="grow-popup-title">
       <div class="grow-view" style="--grow-color: ${growColor}; --phase-color: ${phaseColor}">
         <div class="grow-hero">
-          <div class="grow-hero-overlay"></div>
           <button class="hero-back" data-action="back" aria-label="Close">‹</button>
-          <div class="hero-actions">
-            <button class="hero-action" data-action="gallery" title="Watch grow">🖼️</button>
-            <button class="hero-action" data-action="export" title="Share">📤</button>
-            <button class="hero-action" data-action="tent-layout" title="Tent layout">🏕️</button>
-            <button class="hero-action" data-action="edit" title="Edit">✏️</button>
-          </div>
+          <div class="grow-seal grow-seal--hero" aria-hidden="true">${growSeal(grow, 60)}</div>
           <div class="hero-caption">
             <div class="hero-titlerow">
               <span class="hero-name" id="grow-popup-title">${this.escapeHtml(grow.strain)}</span>
               <span class="phase-badge" style="--phase-color: ${phaseColor}">${stageLabel}</span>
             </div>
             <div class="hero-strain">${this.escapeHtml(grow.name)}</div>
+          </div>
+          <div class="hero-actions">
+            <button class="hero-action" data-action="gallery" title="Watch grow">🖼️</button>
+            <button class="hero-action" data-action="export" title="Share">📤</button>
+            <button class="hero-action" data-action="tent-layout" title="Tent layout">🏕️</button>
+            <button class="hero-action" data-action="edit" title="Edit">✏️</button>
           </div>
         </div>
 
@@ -450,13 +451,12 @@ export class App {
               <div class="detail-stat"><div class="ds-value">${fourthStat.value}</div><div class="ds-label">${fourthStat.label}</div></div>
             </div>
 
-            <div class="section-label">Quick log</div>
+            <div class="section-label">Quick log <span class="section-label-note">· today</span></div>
             <div class="quicklog-row" data-scroll>${quickRow}</div>
 
-            <button class="detail-log-btn" data-action="log-sheet">+ Log a detailed entry</button>
           </div>
 
-          <div class="timeline-container" id="timeline"></div>
+          <div class="disc-container" id="grow-disc"></div>
         </div>
       </div>
       </div>
@@ -475,14 +475,18 @@ export class App {
         // Render reminders (container is in body, not affected by innerHTML)
         this.renderReminders();
 
-        // Setup timeline
-        const timelineEl = this.growModalEl.querySelector('#timeline') as HTMLElement;
-        this.timeline = new Timeline(timelineEl, {
+        // The disc: phase wreath + lanes, replaces the old week timeline
+        const discEl = this.growModalEl.querySelector('#grow-disc') as HTMLElement;
+        this.disc?.destroy();
+        this.disc = new GrowDisc(discEl, {
             onDayClick: (date, _day) => this.showEntryForm(grow, date),
             onEntryClick: (entry) => this.showEntryForm(grow, new Date(entry.date), entry),
             onEntryDelete: (entry) => this.deleteEntry(grow.id, entry),
+            // wheel, calendar or timeline: remembered on this device
+            view: store.getSettings().wheelView,
+            onViewChange: (view) => { store.updateSettings({ wheelView: view }); },
         });
-        this.timeline.render(grow);
+        this.disc.render(grow);
 
         // Setup entry form only once (reuse across grow views)
         if (!this.entryForm) {
@@ -529,9 +533,6 @@ export class App {
                     break;
                 case 'tent-layout':
                     this.showTentLayout(grow);
-                    break;
-                case 'log-sheet':
-                    this.openQuickLogSheet(grow);
                     break;
             }
 
@@ -609,7 +610,7 @@ export class App {
             if (grow) {
                 this.currentGrow = grow;
                 this.closeEntryForm();
-                this.timeline?.render(grow);
+                this.disc?.render(grow);
             }
         }
     }

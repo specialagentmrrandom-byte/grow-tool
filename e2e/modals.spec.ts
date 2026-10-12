@@ -30,7 +30,7 @@ test.describe('Feature modals', () => {
     test('DLI calculator computes from PPFD and hours', async ({ page }) => {
         await openApp(page, [makeSeedGrow()]);
         await page.locator('.grow-card-main').click();
-        await page.locator('.timeline-day.is-today .add-entry-btn').click();
+        await page.locator('[data-action="disc-add"]').click();
         await page.locator('.calc-dli-btn').click();
 
         await expect(page.locator('#calc-ppfd')).toBeVisible();
@@ -74,6 +74,8 @@ test.describe('Feature modals', () => {
     test('app theme toggle flips the theme', async ({ page }) => {
         await openApp(page, [makeSeedGrow()]);
         const html = page.locator('html');
+        // the theme is applied while the app boots; read it once it is there
+        await expect(html).toHaveAttribute('data-theme', /^(light|dark)$/);
         const before = await html.getAttribute('data-theme');
         await page.locator('.theme-toggle').click();
         await expect(html).not.toHaveAttribute('data-theme', before!);
@@ -97,15 +99,16 @@ test.describe('Responsive layout', () => {
         expect(box!.width).toBeLessThanOrEqual(viewport.width + 1);
     });
 
-    test('grow hero keeps its height so action icons do not overlap the stats', async ({ page }) => {
+    test('grow header stays compact and keeps the action icons off the stats', async ({ page }) => {
         await openApp(page, [makeSeedGrow()]);
         await page.locator('.grow-card-main').click();
 
-        // The hero is a flex child whose children are all absolutely positioned;
-        // without flex-shrink:0 it collapses to 0 and drops the action icons
-        // onto the stats row. Guard against that regression.
+        // The header is a flex child of the popup: it must not collapse (the
+        // seal is 60px), and it replaced a 220px banner, so it must stay small.
         const hero = await page.locator('.grow-hero').boundingBox();
-        expect(hero!.height).toBeGreaterThan(120);
+        expect(hero!.height).toBeGreaterThanOrEqual(60);
+        expect(hero!.height).toBeLessThan(160);
+        await expect(page.locator('.grow-hero .grow-seal svg')).toBeVisible();
 
         // Action icons must sit above the stats row, not on top of it.
         const actions = await page.locator('.hero-actions').boundingBox();
@@ -113,7 +116,8 @@ test.describe('Responsive layout', () => {
         expect(actions!.y + actions!.height).toBeLessThanOrEqual(stats!.y + 1);
     });
 
-    test('widescreen dialog fills the screen and gives the timeline the width', async ({ page }) => {
+    test('widescreen dialog fills the screen and gives the disc the width', async ({ page }) => {
+        test.skip((page.viewportSize()?.width ?? 0) < 960, 'two-pane layout starts at 960px');
         await openApp(page, [makeSeedGrow()]);
         await page.locator('.grow-card-main').click();
 
@@ -122,13 +126,13 @@ test.describe('Responsive layout', () => {
         // The dialog should use most of the screen width, not sit at 600px.
         expect(dialog!.width).toBeGreaterThan(viewport.width * 0.8);
 
-        // Two-pane body: the timeline column should take the majority of the
+        // Two-pane body: the disc column should take the majority of the
         // dialog width (control rail is a narrow sidebar).
-        const timeline = await page.locator('.timeline-container').boundingBox();
-        expect(timeline!.width).toBeGreaterThan(dialog!.width * 0.55);
+        const disc = await page.locator('.disc-container').boundingBox();
+        expect(disc!.width).toBeGreaterThan(dialog!.width * 0.55);
 
-        // Control rail sits to the left of the timeline (side-by-side, not stacked).
+        // Control rail sits to the left of the disc (side-by-side, not stacked).
         const controls = await page.locator('.grow-controls').boundingBox();
-        expect(controls!.x + controls!.width).toBeLessThanOrEqual(timeline!.x + 1);
+        expect(controls!.x + controls!.width).toBeLessThanOrEqual(disc!.x + 1);
     });
 });

@@ -42,8 +42,6 @@ export class TutorialOverlay {
     // Remove existing overlay
     this.removeOverlay();
 
-    const rect = targetElement.getBoundingClientRect();
-
     // Create backdrop with hole for target element
     const backdrop = document.createElement('div');
     backdrop.className = 'tutorial-backdrop';
@@ -55,29 +53,6 @@ export class TutorialOverlay {
     // Also add a class to the target element itself
     targetElement.classList.add('tutorial-highlight-target');
 
-    // Function to update highlight position
-    const updateHighlightPosition = () => {
-      const rect = targetElement.getBoundingClientRect();
-      highlight.style.position = 'fixed';
-      highlight.style.top = `${rect.top - 4}px`;
-      highlight.style.left = `${rect.left - 4}px`;
-      highlight.style.width = `${rect.width + 8}px`;
-      highlight.style.height = `${rect.height + 8}px`;
-    };
-
-    // Initial position
-    updateHighlightPosition();
-
-    // Update position on scroll and resize
-    const updatePosition = () => updateHighlightPosition();
-    window.addEventListener('scroll', updatePosition, { passive: true });
-    window.addEventListener('resize', updatePosition, { passive: true });
-
-    // Store cleanup function on highlight element
-    (highlight as any)._tutorialCleanup = () => {
-      window.removeEventListener('scroll', updatePosition);
-      window.removeEventListener('resize', updatePosition);
-    };
 
     // Create tutorial dialog
     const dialog = document.createElement('div');
@@ -88,30 +63,10 @@ export class TutorialOverlay {
     dialog.style.borderRadius = '12px';
     dialog.style.padding = 'var(--space-lg)';
     dialog.style.boxShadow = 'var(--shadow-lg)';
-    dialog.style.maxWidth = '400px';
+    dialog.style.maxWidth = 'min(400px, calc(100vw - 32px))';
+    dialog.style.boxSizing = 'border-box';
     dialog.style.zIndex = '10002';
     dialog.style.pointerEvents = 'auto';
-
-    // Position dialog based on available space
-    const viewportHeight = window.innerHeight;
-    const dialogHeight = 200; // Approximate
-    const spaceAbove = rect.top;
-    const spaceBelow = viewportHeight - rect.bottom;
-
-    if (spaceBelow > dialogHeight + 20) {
-      // Show below
-      dialog.style.top = `${rect.bottom + 20}px`;
-      dialog.style.left = `${Math.max(20, Math.min(rect.left, window.innerWidth - 420))}px`;
-    } else if (spaceAbove > dialogHeight + 20) {
-      // Show above
-      dialog.style.bottom = `${viewportHeight - rect.top + 20}px`;
-      dialog.style.left = `${Math.max(20, Math.min(rect.left, window.innerWidth - 420))}px`;
-    } else {
-      // Show to the side or center
-      dialog.style.top = '50%';
-      dialog.style.left = '50%';
-      dialog.style.transform = 'translate(-50%, -50%)';
-    }
 
     dialog.innerHTML = `
       <div style="margin-bottom: var(--space-md);">
@@ -148,6 +103,49 @@ export class TutorialOverlay {
     document.body.appendChild(backdrop);
     document.body.appendChild(highlight);
     document.body.appendChild(dialog);
+
+    // Keep spotlight and dialog glued to the target. scrollIntoView() is
+    // smooth, so the target is still moving when we get here — measuring
+    // once would leave the dialog sitting on top of the highlighted field.
+    const GAP = 16;
+    const MARGIN = 16;
+    const updatePosition = () => {
+      const r = targetElement.getBoundingClientRect();
+      highlight.style.top = `${r.top - 4}px`;
+      highlight.style.left = `${r.left - 4}px`;
+      highlight.style.width = `${r.width + 8}px`;
+      highlight.style.height = `${r.height + 8}px`;
+
+      const vw = window.innerWidth;
+      const vh = window.innerHeight;
+      const dw = dialog.offsetWidth;
+      const dh = dialog.offsetHeight;
+      const left = Math.max(MARGIN, Math.min(r.left, vw - dw - MARGIN));
+      let top: number;
+      if (vh - r.bottom >= dh + GAP + MARGIN) {
+        top = r.bottom + GAP;                  // below
+      } else if (r.top >= dh + GAP + MARGIN) {
+        top = r.top - GAP - dh;                // above
+      } else {
+        top = vh - dh - MARGIN;                // tall target: pin to bottom edge
+      }
+      dialog.style.top = `${Math.max(MARGIN, top)}px`;
+      dialog.style.left = `${left}px`;
+    };
+
+    updatePosition();
+    let frame = 0;
+    const onMove = () => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(updatePosition);
+    };
+    window.addEventListener('scroll', onMove, { passive: true, capture: true });
+    window.addEventListener('resize', onMove, { passive: true });
+    (highlight as any)._tutorialCleanup = () => {
+      cancelAnimationFrame(frame);
+      window.removeEventListener('scroll', onMove, { capture: true } as EventListenerOptions);
+      window.removeEventListener('resize', onMove);
+    };
 
     // Store references
     backdrop.dataset.tutorial = 'backdrop';

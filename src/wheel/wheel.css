@@ -1,0 +1,797 @@
+/* ==========================================================================
+   The grow tool's journal wheel (slim copy of @rafime/wheel, no 3D flight).
+   Builds on Codex tokens (--cx-*). Import after @rafime/codex/codex.css.
+   ========================================================================== */
+
+/* ---- the drawing (renderWheel) ---- */
+.cx-wheel {
+  max-width: 100%;
+  /* the wheel is dragged with a finger: no scrolling, no text selection,
+     no tap flash, no rectangular focus box */
+  touch-action: none;
+  cursor: grab;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+  outline: none;
+}
+
+.cx-wheel:focus,
+.cx-wheel:focus-visible {
+  outline: none;
+}
+
+.cx-wheel.is-dragging {
+  cursor: grabbing;
+}
+
+/* keyboard focus is drawn in the disc itself: the hub gets a rust ring */
+.cx-wheel:focus-visible .cx-wheel__hub circle {
+  stroke: var(--cx-rust);
+  stroke-width: 2.4;
+}
+
+.cx-wheel__lane-bg {
+  fill: transparent;
+  transition: fill var(--cx-motion-fast) var(--cx-motion-ease);
+}
+
+.cx-wheel__lane.is-selected .cx-wheel__lane-bg {
+  fill: var(--cx-wash);
+}
+
+.cx-wheel__guide {
+  fill: none;
+  stroke: var(--cx-rule-soft);
+  stroke-width: 0.8;
+}
+
+.cx-wheel__lane-label {
+  font-size: 8.5px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  fill: var(--cx-ink-faint);
+}
+
+.cx-wheel__lane-label.is-selected {
+  fill: var(--cx-rust);
+}
+
+.cx-wheel__rim-edge {
+  fill: none;
+  stroke: var(--cx-ink-soft);
+  stroke-width: 0.9;
+}
+
+.cx-wheel__segment {
+  fill: transparent;
+  stroke: var(--cx-ink-soft);
+  stroke-width: 0.9;
+}
+
+.cx-wheel__segment.is-current {
+  stroke: var(--cx-rust);
+}
+
+/* Lines drawn by a pen hand (hatch.tremble): the group carries the line's
+   class (stroke, width, dashes are inherited); brush strokes are filled
+   with --wl. The plain shapes they replace step back. */
+.cx-wheel__pen .pe-s { fill: none; stroke-linecap: round; stroke-linejoin: round; }
+.cx-wheel__pen .pe-f { fill: var(--wl, var(--cx-ink-soft)); stroke: none; }
+.cx-wheel__rim-edge { --wl: var(--cx-ink-soft); }
+.cx-wheel__guide { --wl: var(--cx-rule-soft); }
+.cx-wheel__boundary { --wl: var(--cx-ink-faint); }
+.cx-wheel__edge { --wl: var(--cx-ink-muted); }
+g.cx-wheel__rim-edge { fill: none; }
+.cx-wheel__segment-line { fill: none; stroke: var(--wl, var(--cx-rust)); stroke-width: 1.2; --wl: var(--cx-rust); }
+.cx-wheel__segment-line[style] { stroke: var(--wl); }
+.cx-wheel__needle-line { stroke: var(--cx-rust); stroke-width: 1.6; --wl: var(--cx-rust); }
+.cx-wheel__hub-line { fill: none; stroke: var(--cx-ink-soft); stroke-width: 0.9; --wl: var(--cx-ink-soft); }
+.cx-wheel--pen .cx-wheel__segment { stroke: transparent; }
+.cx-wheel--pen .cx-wheel__hub circle { stroke: transparent; }
+.cx-wheel--pen:focus-visible .cx-wheel__hub circle { stroke: var(--cx-rust); }
+
+/* Hatching (the Codex pen's styles, clipped into a segment or span) */
+.cx-wheel__hatch {
+  --wheel-hatch-ink: var(--wheel-hatch, var(--cx-rust));
+  opacity: var(--wheel-hatch-opacity, 0.2);
+  pointer-events: none;
+}
+
+/* quiet enough that labels on top stay the first thing you read */
+.cx-wheel__hatch.is-current {
+  opacity: var(--wheel-hatch-opacity-current, 0.34);
+}
+
+.cx-wheel__hatch.is-faint {
+  opacity: 0.12;
+}
+
+.cx-wheel__hatch .ph-s {
+  fill: none;
+  stroke: var(--wheel-hatch-ink);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.cx-wheel__hatch .ph-f {
+  fill: var(--wheel-hatch-ink);
+  stroke: none;
+}
+
+.cx-wheel__mark--span.is-hatched {
+  fill: none;
+  stroke: var(--mark, var(--cx-ink));
+  stroke-width: 0.8;
+}
+
+.cx-wheel__rim.is-selected .cx-wheel__rim-edge {
+  stroke: var(--cx-rust);
+}
+
+.cx-wheel__rim-label {
+  font-size: 9.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  fill: var(--cx-ink-strong);
+  /* a paper halo, as on maps: the hatching steps back around the letters */
+  paint-order: stroke;
+  stroke: var(--cx-paper);
+  stroke-width: 3px;
+  stroke-linejoin: round;
+  stroke-opacity: 0.85;
+}
+
+.cx-wheel__rim-label.is-current {
+  fill: var(--cx-rust);
+}
+
+.cx-wheel__boundary {
+  stroke: var(--cx-ink-faint);
+  stroke-width: 0.8;
+  stroke-dasharray: 3 3;
+}
+
+.cx-wheel__edge {
+  stroke: var(--cx-ink-muted);
+  stroke-width: 1;
+}
+
+.cx-wheel__mark {
+  fill: var(--mark, var(--cx-ink));
+  stroke: none;
+}
+
+.cx-wheel__mark--ring {
+  fill: var(--cx-paper);
+  stroke: var(--mark, var(--cx-ink));
+  stroke-width: 1.3;
+}
+
+.cx-wheel__mark--tick {
+  stroke: var(--mark, var(--cx-ink));
+  stroke-width: 1.6;
+  stroke-linecap: round;
+}
+
+.cx-wheel__mark.is-faint {
+  opacity: 0.32;
+}
+
+.cx-wheel__needle line {
+  stroke: var(--cx-rust);
+  stroke-width: 1.6;
+}
+
+.cx-wheel__needle path {
+  fill: var(--cx-rust);
+}
+
+.cx-wheel__selected line {
+  stroke: var(--cx-ink);
+  stroke-width: 1;
+  stroke-dasharray: 4 3;
+}
+
+.cx-wheel__selected circle {
+  fill: var(--cx-paper);
+  stroke: var(--cx-ink);
+  stroke-width: 1.4;
+}
+
+.cx-wheel__hub circle {
+  fill: var(--cx-paper);
+  stroke: var(--cx-ink-soft);
+  stroke-width: 0.9;
+}
+
+.cx-wheel__hub-value {
+  font-size: 40px;
+  fill: var(--cx-ink);
+  font-variant-numeric: lining-nums tabular-nums;
+}
+
+.cx-wheel__hub-caption {
+  font-size: 10.5px;
+  font-style: italic;
+  fill: var(--cx-rust);
+}
+
+
+.cx-wheel__selected line {
+  stroke-width: 1.4;
+}
+
+
+.cx-wheel__mark--span {
+  fill: var(--mark, var(--cx-ink));
+  opacity: 0.75;
+}
+
+.cx-wheel__mark--span.is-faint {
+  opacity: 0.25;
+}
+
+/* ---- the frame (JournalWheel): wheel, day stepper, lane chips, band ---- */
+.cx-wheel-view {
+  display: grid;
+  gap: var(--cx-space-4);
+}
+
+.cx-wheel-figure {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--cx-space-2);
+}
+
+/* ---- the span under the wheel: which stretch of days it shows ---- */
+.cx-wheel-span {
+  display: grid;
+  justify-items: center;
+  gap: var(--cx-space-3);
+  width: 100%;
+  max-width: 440px;
+}
+
+.cx-wheel-span__toggle {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.6em;
+  padding: 0.35em 0.2em 0.3em;
+  border: 0;
+  border-bottom: 1px dashed var(--cx-ink-faint);
+  background: none;
+  color: var(--cx-ink);
+  font: inherit;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.cx-wheel-span__toggle:hover,
+.cx-wheel-span.is-open .cx-wheel-span__toggle {
+  border-bottom-color: var(--cx-rust);
+}
+
+.cx-wheel-span__toggle:focus-visible {
+  outline: 1px solid var(--cx-rust);
+  outline-offset: 3px;
+}
+
+.cx-wheel-span__name {
+  font-size: var(--cx-text-xl, 1.0625rem);
+}
+
+.cx-wheel-span__dates {
+  font-size: 0.85em;
+  font-style: italic;
+  color: var(--cx-ink-muted);
+}
+
+.cx-wheel-span__caret {
+  align-self: center;
+  width: 0.45em;
+  height: 0.45em;
+  border-right: 1.2px solid currentColor;
+  border-bottom: 1.2px solid currentColor;
+  transform: translateY(-0.15em) rotate(45deg);
+  transition: transform var(--cx-motion-fast) var(--cx-motion-ease);
+}
+
+.cx-wheel-span.is-open .cx-wheel-span__caret {
+  transform: translateY(0.1em) rotate(225deg);
+}
+
+.cx-wheel-span__panel {
+  display: grid;
+  gap: var(--cx-space-3);
+  width: 100%;
+  text-align: left;
+}
+
+.cx-wheel-span__range {
+  display: grid;
+  gap: var(--cx-space-2);
+  margin: 0;
+}
+
+.cx-wheel-span__fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  align-items: end;
+  gap: var(--cx-space-3);
+}
+
+.cx-wheel-span__fields .cx-field {
+  margin: 0;
+  min-width: 0;
+}
+
+.cx-wheel-span__error {
+  margin: 0;
+  min-height: 1.2em;
+  font-size: 0.9em;
+  font-style: italic;
+  color: var(--cx-rust);
+}
+
+.cx-wheel-span__error:empty {
+  min-height: 0;
+}
+
+@media (max-width: 420px) {
+  .cx-wheel-span__fields {
+    grid-template-columns: 1fr 1fr;
+  }
+  .cx-wheel-span__fields .cx-btn {
+    grid-column: 1 / -1;
+  }
+}
+
+.cx-wheel-figure .cx-wheel {
+  width: 100%;
+  max-width: 440px;
+  height: auto;
+}
+
+.cx-wheel-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--cx-space-2);
+}
+
+.cx-wheel-stepper {
+  display: flex;
+  gap: 6px;
+}
+
+.cx-wheel-stepper .cx-btn {
+  min-width: var(--cx-size-touch);
+  padding-inline: var(--cx-space-2);
+}
+
+.cx-wheel-stepper .cx-btn.is-current {
+  color: var(--cx-rust);
+  --cx-edge: color-mix(in srgb, var(--cx-rust) 55%, transparent);
+}
+
+.cx-wheel-lanes .cx-chip {
+  min-height: 36px;
+}
+
+.cx-wheel-band {
+  gap: var(--cx-space-4);
+}
+
+.cx-wheel-day {
+  text-align: right;
+}
+
+/* Wide: wheel on the left, controls and band on the right */
+@media (min-width: 900px) {
+  .cx-wheel-view--wide {
+    grid-template-columns: minmax(320px, 1fr) minmax(300px, 1fr);
+    grid-template-rows: auto 1fr;
+    align-items: start;
+  }
+
+  .cx-wheel-view--wide .cx-wheel-figure {
+    grid-row: span 2;
+  }
+}
+
+/* ---- other views of the same days: the switch, the calendar, the timeline ---- */
+.cx-wheel-views {
+  justify-content: center;
+  width: 100%;
+}
+
+.cx-wheel-views .cx-chip {
+  min-height: 34px;
+  gap: 0.4em;
+}
+
+.cx-wheel-views .cx-icon {
+  width: 1.05em;
+  height: 1.05em;
+}
+
+.cx-flat {
+  width: 100%;
+  align-self: stretch;
+  outline: none;
+}
+
+.cx-flat:focus-visible {
+  outline: 2px solid var(--cx-rust);
+  outline-offset: 4px;
+}
+
+.cx-flat__mark {
+  display: block;
+  background: var(--mark, var(--cx-ink));
+}
+
+.cx-flat__mark.is-faint {
+  opacity: 0.35;
+}
+
+/* Calendar: months as week grids, the lane in focus as a heat map */
+.cx-cal {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
+  gap: var(--cx-space-4) var(--cx-space-5);
+  max-height: min(72vh, 660px);
+  overflow: auto;
+  overscroll-behavior: contain;
+  padding: 4px;
+}
+
+.cx-cal__title {
+  margin: 0 0 6px;
+}
+
+.cx-cal__grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 3px;
+}
+
+.cx-cal__head {
+  text-align: center;
+  font-size: var(--cx-text-2xs);
+  color: var(--cx-ink-muted);
+  padding-bottom: 2px;
+}
+
+.cx-cal__day {
+  appearance: none;
+  position: relative;
+  aspect-ratio: 1;
+  min-height: 32px;
+  margin: 0;
+  padding: 3px 4px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: space-between;
+  overflow: hidden;
+  font: inherit;
+  color: var(--cx-ink);
+  background: var(--cx-paper-raised);
+  border: 1px solid var(--cx-line);
+  border-radius: 3px;
+  cursor: pointer;
+}
+
+.cx-cal__day:hover {
+  border-color: var(--cx-line-strong);
+}
+
+.cx-cal__day.has-heat {
+  background: color-mix(in srgb, var(--mark, var(--cx-ochre)) var(--v), var(--cx-paper-raised));
+}
+
+.cx-cal__day.has-period {
+  box-shadow: inset 0 3px 0 color-mix(in srgb, var(--seg) 65%, transparent);
+}
+
+.cx-cal__day.is-period-focus {
+  background: color-mix(in srgb, var(--seg) 20%, var(--cx-paper-raised));
+}
+
+.cx-cal__day.is-current-period.is-period-focus {
+  background:
+    repeating-linear-gradient(38deg, color-mix(in srgb, var(--cx-rust) 30%, transparent) 0 1px, transparent 1px 6px),
+    color-mix(in srgb, var(--seg) 20%, var(--cx-paper-raised));
+}
+
+.cx-cal__day.is-ahead {
+  border-style: dashed;
+  color: var(--cx-ink-muted);
+}
+
+.cx-cal__day.is-today {
+  border-color: var(--cx-rust);
+}
+
+.cx-cal__day.is-today .cx-cal__num {
+  color: var(--cx-rust);
+  font-weight: 700;
+}
+
+.cx-cal__day.is-selected {
+  outline: 2px solid var(--cx-ink);
+  outline-offset: 1px;
+  z-index: 1;
+}
+
+.cx-cal__num {
+  font-size: var(--cx-text-xs);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.cx-cal__glyphs,
+.cx-cal__pips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px;
+  line-height: 0;
+}
+
+.cx-cal .cx-flat__mark {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+.cx-cal .cx-flat__mark--ring {
+  background: transparent;
+  border: 1.4px solid var(--mark, var(--cx-ink));
+}
+
+.cx-cal .cx-flat__mark--square {
+  border-radius: 1px;
+}
+
+.cx-cal .cx-flat__mark--tick {
+  width: 2px;
+  height: 8px;
+  border-radius: 1px;
+}
+
+.cx-cal .cx-flat__mark--span {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: auto;
+  height: 3px;
+  border-radius: 0;
+  opacity: 0.8;
+}
+
+.cx-cal__pip {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--mark, var(--cx-ink-muted));
+  opacity: 0.8;
+}
+
+.cx-cal__pip.is-faint {
+  opacity: 0.3;
+}
+
+/* Timeline: a row per lane, days left to right */
+.cx-line {
+  --label: 6.5rem;
+  display: grid;
+  gap: 5px;
+  padding-block: 2px 6px;
+}
+
+.cx-line__row {
+  display: grid;
+  grid-template-columns: var(--label) minmax(0, 1fr);
+  gap: 10px;
+  min-height: 34px;
+}
+
+.cx-line__row--months {
+  min-height: 18px;
+}
+
+.cx-line__label {
+  appearance: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: var(--cx-text-xs);
+  letter-spacing: var(--cx-tracking-label);
+  color: var(--cx-ink-muted);
+  text-align: right;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+}
+
+.cx-line__row.is-selected .cx-line__label {
+  color: var(--cx-rust);
+  font-weight: 600;
+}
+
+.cx-line__track {
+  position: relative;
+  min-width: 0;
+  background: color-mix(in srgb, var(--cx-ink) 4%, transparent);
+  border-bottom: 1px solid var(--cx-line);
+  cursor: ew-resize;
+  touch-action: pan-y;
+}
+
+.cx-line__row.is-selected .cx-line__track {
+  background: color-mix(in srgb, var(--cx-rust) 8%, transparent);
+}
+
+.cx-line__row--months .cx-line__track {
+  background: none;
+  border: 0;
+  cursor: default;
+}
+
+.cx-line__month {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  padding-left: 4px;
+  border-left: 1px solid var(--cx-line-strong);
+  font-size: var(--cx-text-2xs);
+  color: var(--cx-ink-muted);
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.cx-line__edge {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: var(--cx-line);
+  pointer-events: none;
+}
+
+.cx-line__ahead {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  right: 0;
+  background: repeating-linear-gradient(135deg, transparent 0 4px, color-mix(in srgb, var(--cx-ink) 7%, transparent) 4px 5px);
+  pointer-events: none;
+}
+
+.cx-line__today {
+  position: absolute;
+  top: -3px;
+  bottom: -3px;
+  width: 2px;
+  margin-left: -1px;
+  background: var(--cx-rust);
+  pointer-events: none;
+}
+
+.cx-line__cursor {
+  position: absolute;
+  top: -3px;
+  bottom: -3px;
+  left: var(--sel);
+  width: max(var(--day), 3px);
+  margin-left: calc((var(--day) - max(var(--day), 3px)) / 2);
+  background: color-mix(in srgb, var(--cx-ink) 12%, transparent);
+  box-shadow: 0 0 0 1.5px var(--cx-ink);
+  border-radius: 1px;
+  pointer-events: none;
+}
+
+.cx-line .cx-flat__mark {
+  position: absolute;
+  pointer-events: none;
+}
+
+.cx-line .cx-flat__mark--bar {
+  bottom: 0;
+  height: max(2px, var(--v));
+  transform: scaleX(0.78);
+  transform-origin: center bottom;
+  border-radius: 1px 1px 0 0;
+}
+
+.cx-line .cx-flat__mark--dot,
+.cx-line .cx-flat__mark--ring,
+.cx-line .cx-flat__mark--square,
+.cx-line .cx-flat__mark--tick {
+  top: calc(100% - var(--p));
+  height: 10px;
+  min-width: 6px;
+  margin-top: -5px;
+  background: none;
+}
+
+.cx-line .cx-flat__mark--dot {
+  background: radial-gradient(circle, var(--mark, var(--cx-ink)) 2.6px, transparent 3.1px) center / 6px 6px no-repeat;
+}
+
+.cx-line .cx-flat__mark--ring {
+  background: radial-gradient(circle, transparent 1.7px, var(--mark, var(--cx-ink)) 2px 2.9px, transparent 3.3px) center / 7px 7px no-repeat;
+}
+
+.cx-line .cx-flat__mark--square {
+  background: linear-gradient(var(--mark, var(--cx-ink)), var(--mark, var(--cx-ink))) center / 5px 5px no-repeat;
+}
+
+.cx-line .cx-flat__mark--tick {
+  background: linear-gradient(var(--mark, var(--cx-ink)), var(--mark, var(--cx-ink))) center / 2px 10px no-repeat;
+}
+
+.cx-line .cx-flat__mark--span {
+  top: calc(100% - var(--p));
+  height: max(3px, calc(var(--v) * 0.6 * 34px));
+  transform: translateY(-50%);
+  border-radius: 2px;
+  opacity: 0.75;
+}
+
+.cx-line__period {
+  position: absolute;
+  top: 3px;
+  bottom: 3px;
+  display: flex;
+  align-items: center;
+  padding-inline: 5px;
+  overflow: hidden;
+  font-size: var(--cx-text-2xs);
+  white-space: nowrap;
+  color: var(--cx-ink);
+  background: color-mix(in srgb, var(--seg) 26%, transparent);
+  border-left: 2px solid var(--seg);
+  pointer-events: none;
+}
+
+.cx-line__period.is-current {
+  background:
+    repeating-linear-gradient(38deg, color-mix(in srgb, var(--cx-rust) 40%, transparent) 0 1px, transparent 1px 6px),
+    color-mix(in srgb, var(--seg) 26%, transparent);
+}
+
+.cx-line__period span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+@media (max-width: 520px) {
+  .cx-line {
+    --label: 4.6rem;
+  }
+
+  .cx-line__row {
+    gap: 6px;
+  }
+}
+
+/* wide screens: the timeline wants the whole width, the band goes under it */
+@media (min-width: 900px) {
+  .cx-wheel-view--wide.is-timeline {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .cx-wheel-view--wide.is-timeline .cx-wheel-figure {
+    grid-row: auto;
+  }
+}

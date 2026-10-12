@@ -1,4 +1,5 @@
 import { type Page } from '@playwright/test';
+import { loadEnv } from 'vite';
 
 /**
  * Shared E2E helpers.
@@ -80,4 +81,14 @@ export async function openApp(page: Page, grows: unknown[] = []): Promise<void> 
         localStorage.setItem('og-grow-theme', 'dark');
     }, grows);
     await page.goto(APP_URL);
+}
+
+/**
+ * The VITE_ variables the dev server runs with: the .env files plus the
+ * environment, exactly as Vite resolves them (the environment wins).
+ */
+export function viteEnv(): Record<string, string> {
+    return { ...loadEnv('development', process.cwd(), 'VITE_'), ...Object.fromEntries(
+        Object.entries(process.env).filter(([k, v]) => k.startsWith('VITE_') && v !== undefined) as [string, string][],
+    ) };
 }

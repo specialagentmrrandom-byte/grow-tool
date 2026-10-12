@@ -30,14 +30,14 @@ test.describe('Reminders', () => {
         await expect(page.locator('.today-strip')).toContainText('All caught up');
     });
 
-    test('future timeline day creates a reminder with buffer', async ({ page }) => {
+    test('future day on the disc creates a reminder with buffer', async ({ page }) => {
         await openApp(page, [makeSeedGrow()]);
         await page.locator('.grow-card-main').click();
 
-        // Open a future day (they carry the "Add reminder" title)
-        const futureDay = page.locator('.timeline-day.is-future').first();
-        await futureDay.scrollIntoViewIfNeeded();
-        await futureDay.locator('.add-entry-btn').click();
+        // Step one day ahead; the band then offers a reminder instead of an entry
+        await page.locator('[data-wheel-step="next"]').click();
+        await expect(page.locator('[data-action="disc-add"]')).toHaveText(/^\+ Reminder for Day \d+$/);
+        await page.locator('[data-action="disc-add"]').click();
 
         await expect(page.locator('.entry-modal')).toBeVisible();
         // Future dates force the reminder type and show the buffer picker
@@ -45,7 +45,7 @@ test.describe('Reminders', () => {
         await page.locator('#entry-title').fill('Flip to 12/12');
         await page.locator('.entry-modal button[type="submit"]').click();
 
-        await expect(page.locator('.timeline-entry .entry-title')).toHaveText('Flip to 12/12');
+        await expect(page.locator('.disc-entry .entry-title')).toHaveText('Flip to 12/12');
     });
 
     test('reminder without buffer is not shown before its notify window', async ({ page }) => {

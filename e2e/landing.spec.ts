@@ -13,12 +13,23 @@ test.describe('Landing page', () => {
         await expect(page.locator('.feature')).toHaveCount(9);
         const titles = await page.locator('.feature h3').allTextContents();
         for (const feature of [
-            'Grow diary', 'Visual timeline', 'DLI light planning', 'Smart reminders',
+            'Grow diary', 'The grow disc', 'DLI light planning', 'Smart reminders',
             'Tent planner', 'Photo gallery', 'Reports & export', 'Works everywhere',
             'Optional sync',
         ]) {
             expect(titles).toContain(feature);
         }
+    });
+
+    test('the grow disc demo is live: lanes, today and a band that answers', async ({ page }) => {
+        const demo = page.locator('#landing-disc');
+        await demo.scrollIntoViewIfNeeded();
+        await expect(demo.locator('svg.cx-wheel')).toBeVisible();
+        await expect(demo.locator('.cx-wheel__needle')).toHaveCount(1);
+        await expect(demo.locator('.cx-wheel__segment.is-current')).toHaveAttribute('data-key', 'flower');
+        await demo.locator('[data-wheel-focus="water"]').click();
+        await expect(demo.locator('.cx-wheel-band .cx-eyebrow')).toHaveText('Water & feed');
+        await expect(page.locator('#landing-seals svg')).toHaveCount(6);
     });
 
     test('the sync section says it is optional and end-to-end encrypted', async ({ page }) => {

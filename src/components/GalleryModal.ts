@@ -265,7 +265,7 @@ export class GalleryModal {
 
         // Placeholder card for days without photos
         return `
-      <div class="gallery-placeholder" style="background: ${slide.phaseColor}">
+      <div class="gallery-placeholder" style="--phase: ${slide.phaseColor}">
         <div class="placeholder-icon">${entryIcons[slide.entryType]}</div>
         <div class="placeholder-day">Day ${slide.day}</div>
         <div class="placeholder-week">Week ${slide.week}</div>
@@ -383,7 +383,7 @@ export class GalleryModal {
         // If no entries, show empty state
         if (this.slides.length === 0) {
             this.container.innerHTML = `
-        <div class="gallery-overlay">
+        <div class="gallery-overlay cx-theme-dark">
           <div class="gallery-empty">
             <div class="gallery-empty-icon">📷</div>
             <h3>No entries yet</h3>
@@ -412,7 +412,7 @@ export class GalleryModal {
         const showAllDots = this.slides.length <= maxDots;
 
         const html = `
-      <div class="gallery-overlay">
+      <div class="gallery-overlay cx-theme-dark">
         <div class="gallery-container">
           <header class="gallery-header-section">
             <div class="gallery-header-row">

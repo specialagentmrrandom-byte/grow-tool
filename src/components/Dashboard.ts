@@ -1,4 +1,5 @@
 import { type Grow, type EntryType, PHASE_COLORS } from '../types';
+import { growSeal } from '../seal';
 import { store } from '../store';
 import { getPhaseInfo, formatPhase } from '../dli';
 import { OVERGROW_URL } from '../overgrow';
@@ -260,9 +261,7 @@ export class Dashboard {
           <button class="grow-card-tool grow-card-tool-danger" data-delete-id="${grow.id}" title="Delete">🗑️</button>
         </div>
         <div class="grow-card-main" data-grow-id="${grow.id}">
-          <div class="grow-thumb" aria-hidden="true">
-            <span class="grow-thumb-day">Day ${info.day}</span>
-          </div>
+          <div class="grow-seal" aria-hidden="true">${growSeal(grow, 56)}</div>
           <div class="grow-card-info">
             <div class="grow-card-titlerow">
               <span class="grow-card-name">${this.escapeHtml(grow.strain)}</span>

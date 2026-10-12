@@ -214,7 +214,7 @@ export class QuickLogSheet {
 
         <div class="ql-actions">
           <button class="ql-cancel" data-ql-close>Cancel</button>
-          <button class="ql-save" data-ql-save>Save to ${this.escapeHtml(grow.strain)}</button>
+          <button class="ql-save" data-ql-save><span class="ql-save-label">Save to ${this.escapeHtml(grow.strain)}</span></button>
         </div>
       </div>
     `;

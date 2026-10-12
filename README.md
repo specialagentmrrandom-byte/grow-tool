@@ -12,7 +12,7 @@ Part of the [Overgrow](https://overgrow.com) growing community.
 
 ## About this repository
 
-This is the **public source** of OG Grow Journal Assistant: the app, its assets and its tests. It is updated automatically whenever the app changes, so what you see here is what runs on [grow.rafime.de](https://grow.rafime.de).
+This is the **public source** of OG Grow Journal Assistant: the app, its assets and its tests. It is updated automatically whenever the app changes, so what you see here is what runs on [grow.rafime.de](https://grow.rafime.de). The first version of the app stays available at [classic.grow.rafime.de](https://classic.grow.rafime.de) (tag `v1`).
 
 It is a working copy, not just a read-only dump — clone it and it runs:
 
@@ -30,16 +30,17 @@ copy `.env.example` to `.env.local` and point it at your own Supabase project if
 you want to work on that part — see `src/sync/` and the account dialog.
 
 What is *not* here: the deployment workflows and the hosting config of the live
-site, the database migrations behind the optional sync, and one optional add-on
-that is specific to the hosted version (`src/accountAddon.ts` explains the
-extension point it plugs into — this build simply has none).
+site, and the database migrations behind the optional sync. The live site is
+built from exactly the code in this repository — nothing is added on top.
+(`src/accountAddon.ts` is an extension point for optional add-ons to the
+account dialog; no build currently uses it.)
 
 ## What the app does
 
 OG Grow Journal Assistant is a Progressive Web App for documenting a grow day by day. It runs entirely in the browser, works offline, and keeps data on the user's own device — no account needed, no tracking. An optional, end-to-end encrypted sync keeps a diary on several devices.
 
 - **📅 Grow diary** — dated entries with notes, photos and milestones; color-coded phases from seed to harvest
-- **📊 Visual timeline** — every phase at a glance, collapsible weeks, a "today" marker
+- **🎡 Grow disc** — the whole grow on one wheel: phases on the rim, journal, water & feed and light as lanes inside, plus calendar and timeline views of the same days
 - **☀️ DLI calculator** — Daily Light Integral math with week-by-week targets for autos and photoperiods
 - **⏰ Smart reminders** — watering/feeding reminders with buffer days
 - **🏕️ Tent planner** — top-down pot layout with drag & drop and bin-packing auto-arrange
@@ -66,18 +67,23 @@ src/
   store.ts          localStorage store: grows, entries, settings, export/import
   photoStore.ts     IndexedDB store for photo blobs
   app.ts            app controller: hash routing and view switching
-  timeline.ts       timeline renderer
+  disc.ts           the grow disc's model: days, phases and lanes of one grow
+  wheel/            the journal wheel: SVG wheel, calendar and timeline views, drag & keys
+  seal.ts           the generated seal that tells grows apart
+  pen.ts            the hand-drawn ink look (Codex pen) over the whole app
   overgrow.ts       Overgrow links and forum-topic builder
   sync/             optional sync: auth, encryption, merge rules, photo upload
   theme.ts          light/dark theming
-  components/       UI components (Dashboard, GrowForm, EntryForm, TentPlanner, …)
-tests/              Vitest unit tests (DLI math, store, Markdown export, Overgrow)
-e2e/                Playwright tests (landing, grow creation, diary, modals, reminders)
+  components/       UI components (Dashboard, GrowDisc, GrowForm, EntryForm, TentPlanner, …)
+packages/codex/     the Codex design system: tokens, cx- components, icons, the "grow" colours
+tests/              Vitest unit tests (DLI math, store, wheel, disc, Markdown export, Overgrow)
+e2e/                Playwright tests (landing, grow creation, diary & disc, modals, reminders)
 ```
 
 Good places to start:
 
 - **`src/dli.ts`** — how phases are detected and light targets are calculated
+- **`src/components/GrowDisc.ts`** + **`src/wheel/`** — how a grow becomes one wheel
 - **`src/store.ts`** — the data model in practice, including JSON import validation and Markdown export
 - **`src/components/TentPlanner.ts`** — pot layout and auto-arrange
 

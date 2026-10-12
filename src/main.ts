@@ -1,4 +1,15 @@
+// Codex design system (packages/codex): fonts, tokens, cx- components, the
+// "grow" colour variant (hemp paper, olive-umber ink, chlorophyll accent), the grow
+// palette, then the grow's journal wheel (src/wheel).
+// The app's own styles.css builds on its variables, so it has to come after.
+import '@rafime/codex/fonts.css';
+import '@rafime/codex/codex.css';
+import '@rafime/codex/variants/grow.css';
+import '@rafime/codex/palettes/grow.css';
+import './wheel/wheel.css';
 import './styles.css';
+import { installInk } from '@rafime/codex';
+import { startPen } from './pen';
 import { App } from './app';
 import { store } from './store';
 import { photoStore } from './photoStore';
@@ -353,7 +364,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         localStorage.setItem('og-grow-theme', settings.theme);
     }
 
+    // Codex: borders drawn in trembling ink
+    installInk(document);
     new App('#app', '#modal');
+    // …and edges and shadows drawn by the grow variant's pen
+    startPen();
 
     // Parse emojis on initial load
     parseEmojis();

@@ -29,6 +29,14 @@ describe('import guard', () => {
         expect(data?.settings.theme).toBe('dark');
     });
 
+    it('keeps the disc view (wheel, calendar, timeline) and drops unknown ones', () => {
+        const withView = (wheelView: unknown) => sanitizeImport({ ...growFile(), settings: { ...growFile().settings, wheelView } }, defaults).data!.settings.wheelView;
+        expect(withView('calendar')).toBe('calendar');
+        expect(withView('timeline')).toBe('timeline');
+        expect(withView('<img onerror=x>')).toBeUndefined();
+        expect(withView(undefined)).toBeUndefined();
+    });
+
     it('refuses anything that is not a backup', () => {
         for (const junk of [null, 42, 'hello', [], {}, { grows: 'lots' }, { grows: {} }]) {
             expect(sanitizeImport(junk, defaults).data).toBeNull();

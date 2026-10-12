@@ -1,0 +1,335 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Codex Referenz</title>
+<link rel="stylesheet" href="../dist/all.css">
+<link rel="stylesheet" href="../dist/palettes/grow.css">
+<link rel="stylesheet" href="../dist/palettes/iso.css">
+<style>
+  body { background: var(--cx-ground); padding: 32px 16px 64px; }
+  .page { max-width: 1240px; margin: 0 auto; display: flex; flex-direction: column; gap: 40px; }
+  .row { display: flex; flex-wrap: wrap; gap: 28px; align-items: flex-start; }
+  .caption { font: 400 var(--cx-text-sm)/1.5 var(--cx-font-serif); color: color-mix(in srgb, var(--cx-paper) 62%, transparent); max-width: 70ch; margin: 0 0 12px; }
+  :root[data-theme="dark"] .caption { color: var(--cx-ink-muted); }
+  .caption b { font-weight: 500; color: var(--cx-paper); }
+  :root[data-theme="dark"] .caption b { color: var(--cx-ink); }
+  .swatches { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 14px; }
+  .sw { display: flex; flex-direction: column; gap: 6px; }
+  .sw i { display: block; height: 44px; border: 1px solid var(--cx-line); }
+  .scale { display: flex; flex-direction: column; gap: 10px; }
+  .scale > div { display: flex; align-items: baseline; gap: 16px; }
+  .scale code { flex: none; width: 110px; font: 400 11px var(--cx-font-mono); color: var(--cx-ink-faint); }
+  .ring { width: 100%; max-width: 340px; margin: 0 auto; }
+</style>
+</head>
+<body class="cx">
+<div class="page">
+
+  <header class="cx-sheet cx-sheet--folio">
+    <div class="cx-sheet__head">
+      <span class="cx-eyebrow">Folio I · @rafime/codex</span>
+      <div class="cx-chips" role="group" aria-label="Thema">
+        <button class="cx-chip" type="button" data-theme-set="light" aria-pressed="true">Papier</button>
+        <button class="cx-chip" type="button" data-theme-set="dark" aria-pressed="false">Nachtblatt</button>
+      </div>
+    </div>
+    <h1 class="cx-title">Tinte auf Papier — Instrument statt Interface</h1>
+    <p class="cx-subtitle">Die gemeinsame Sprache von Grow Journal und ISO Coach: Eisengallustinte auf geripptem Papier, EB&nbsp;Garamond, eine Antwort pro Blatt.</p>
+    <div class="cx-folio">
+      <section class="cx-section">
+        <span class="cx-eyebrow">Tinte, Papier, Pigmente</span>
+        <div class="swatches" id="swatches"></div>
+      </section>
+      <aside class="cx-folio__margin">
+        <section class="cx-section">
+          <span class="cx-eyebrow">Regeln</span>
+          <ol class="cx-steps">
+            <li>Oben die Antwort, darunter die Stellschrauben.</li>
+            <li>Rost heißt: heute, handeln, abweichend.</li>
+            <li>Moos heißt: im Band. Gestrichelt heißt: unbekannt, nie 0.</li>
+            <li>Ein gefülltes Tap-Ziel pro Blatt, der Rest ist Rahmen.</li>
+            <li>Zahlen mit Komma, echtem Minus und Einheit.</li>
+          </ol>
+        </section>
+        <section class="cx-section">
+          <span class="cx-eyebrow">Schriftgrade</span>
+          <div class="scale" id="scale"></div>
+        </section>
+      </aside>
+    </div>
+  </header>
+
+  <section>
+    <p class="caption"><b>Knöpfe</b> · jeder Knopf ist ein kleines Kärtchen auf dem Blatt: Fläche, Tintenrand und ein gezeichneter Schatten aus Schraffur. Beim Überfahren hebt er sich, beim Drücken liegt er im eigenen Schatten.</p>
+    <div class="row">
+      <article class="cx-sheet cx-sheet--phone">
+        <div class="cx-sheet__head"><span class="cx-eyebrow">Varianten</span><span class="cx-meta">cx-btn</span></div>
+        <button class="cx-btn cx-btn--solid cx-btn--lg cx-btn--block" type="button">Gießen starten<span class="cx-btn__sub">das eine gefüllte Ziel</span></button>
+        <div class="cx-btn-row">
+          <button class="cx-btn" type="button">Rahmen</button>
+          <button class="cx-btn cx-btn--attention" type="button">Schädling</button>
+          <button class="cx-btn cx-btn--quiet" type="button">Später</button>
+          <button class="cx-btn" type="button" disabled>Gesperrt</button>
+        </div>
+        <div class="cx-btn-grid">
+          <button class="cx-btn" type="button">Umtopfen</button><button class="cx-btn" type="button">LST</button>
+        </div>
+      </article>
+      <article class="cx-sheet cx-sheet--phone">
+        <div class="cx-sheet__head"><span class="cx-eyebrow">Filter und Marken</span><span class="cx-meta">cx-chip · cx-hatched</span></div>
+        <div class="cx-chips" role="group" aria-label="Filter">
+          <button class="cx-chip" type="button" aria-pressed="true">alle</button>
+          <button class="cx-chip" type="button" aria-pressed="false">Gießen</button>
+          <button class="cx-chip" type="button" aria-pressed="false">Training</button>
+          <button class="cx-chip" type="button" aria-pressed="false">Klima</button>
+        </div>
+        <div class="cx-chips"><span class="cx-chip">Marke, nicht klickbar</span></div>
+        <div class="cx-tile cx-figure cx-hatched"><span class="cx-figure__value">26 ml</span><span class="cx-figure__label">Kachel mit gezeichnetem Schatten</span></div>
+        <div class="cx-callout cx-callout--attention">
+          <span class="cx-callout__title">Wechsel in die Spülphase</span>
+          <div class="cx-btn-row"><button class="cx-btn cx-btn--solid" type="button">Bestätigen</button><button class="cx-btn cx-btn--quiet" type="button">Später</button></div>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <section>
+    <p class="caption"><b>Grow Journal</b> · die vier Blätter aus „Requirements v1“ (8a–8d), gebaut nur aus Codex-Klassen und der Palette <code>palettes/grow.css</code>.</p>
+    <div class="row">
+
+      <article class="cx-sheet cx-sheet--phone">
+        <div class="cx-sheet__head"><span class="cx-eyebrow">Zelte</span><span class="cx-meta">Blüte · Woche 6 · Tag 38</span></div>
+        <div class="cx-band cx-band--ok">
+          <div class="cx-band__head"><span>Big Tent</span><span class="cx-band__status">im Band</span></div>
+          <div class="cx-band__value">1,18 <small>kPa · Zielband 1,0–1,3</small></div>
+        </div>
+        <div class="cx-band cx-band--offline">
+          <div class="cx-band__head"><span>Small Tent</span><span class="cx-band__status">Sensor weg</span></div>
+          <p class="cx-note">nicht erreichbar seit 14 min — kein Wert, keine Bewertung</p>
+        </div>
+        <section class="cx-section">
+          <span class="cx-eyebrow">Soll gegen Ist · Big Tent</span>
+          <div class="cx-figures">
+            <div class="cx-figure cx-figure--target"><span class="cx-figure__value">24,0 ° / 65 %</span><span class="cx-label">Soll, Blüte</span></div>
+            <div class="cx-figure"><span class="cx-figure__value">26,4 ° / 58 %</span><span class="cx-label">Ist</span></div>
+          </div>
+          <p class="cx-body cx-attention">Zu warm und zu trocken — Abluft eine Stufe runter.</p>
+        </section>
+        <section class="cx-section">
+          <span class="cx-eyebrow">Hilft Lüften?</span>
+          <ul class="cx-leaders">
+            <li class="cx-leader"><span class="cx-leader__label">Zelt, absolut</span><span class="cx-leader__value">14,2 g/m³</span></li>
+            <li class="cx-leader"><span class="cx-leader__label">Raum, absolut</span><span class="cx-leader__value">9,8 g/m³</span></li>
+            <li class="cx-leader cx-leader--attention"><span class="cx-leader__label">Differenz · Schwelle 1,0</span><span class="cx-leader__value">4,4 g/m³</span></li>
+          </ul>
+          <p class="cx-note">Die Raumluft ist trockener als die Zeltluft — mehr Abluft senkt die Feuchte wirklich.</p>
+        </section>
+        <div class="cx-btn-row"><button class="cx-btn" type="button">Automatik-Schalter</button><button class="cx-btn" type="button">Zielband</button></div>
+      </article>
+
+      <article class="cx-sheet cx-sheet--phone">
+        <div class="cx-sheet__head"><span class="cx-eyebrow">Gießen</span><span class="cx-meta">Gießgang 7 · Woche 6</span></div>
+        <div>
+          <h2 class="cx-title">Heute: mit Dünger · 6,6 L</h2>
+          <p class="cx-meta" style="margin-top:7px;font-size:var(--cx-text-md)">1,65 L je Topf · 4 Töpfe à 11 L</p>
+        </div>
+        <div class="cx-figures">
+          <div class="cx-tile cx-figure"><span class="cx-figure__value">26 ml</span><span class="cx-figure__label">Bio-Grow</span></div>
+          <div class="cx-tile cx-figure"><span class="cx-figure__value">26 ml</span><span class="cx-figure__label">Bio-Bloom</span></div>
+          <div class="cx-tile cx-figure"><span class="cx-figure__value">13 ml</span><span class="cx-figure__label">Top-Max</span></div>
+          <div class="cx-tile cx-figure"><span class="cx-figure__value">13 ml</span><span class="cx-figure__label">Alg-A-Mic</span></div>
+        </div>
+        <section class="cx-section">
+          <span class="cx-eyebrow">Anrührreihenfolge</span>
+          <ol class="cx-steps">
+            <li class="is-done">6,6 L Wasser, 20 °</li>
+            <li>Bio-Grow 26 ml, umrühren</li>
+            <li>Bio-Bloom 26 ml, umrühren</li>
+            <li>Top-Max 13 ml</li>
+            <li>Alg-A-Mic 13 ml zuletzt</li>
+          </ol>
+        </section>
+        <div>
+          <button class="cx-btn cx-btn--solid cx-btn--lg cx-btn--block" type="button">Gießen läuft<span class="cx-btn__sub">Durchgang 2 von 4 · 3:10 verbleibend</span></button>
+          <div class="cx-progress" style="--cx-value:.42;margin-top:9px" role="progressbar" aria-valuenow="42" aria-valuemin="0" aria-valuemax="100" aria-label="Gießen"></div>
+        </div>
+        <ul class="cx-leaders">
+          <li class="cx-leader"><span class="cx-leader__label">zuletzt gegossen</span><span class="cx-leader__value">vor 2 Tagen</span></li>
+          <li class="cx-leader cx-leader--attention"><span class="cx-leader__label">jeder dritte Gang ohne Dünger</span><span class="cx-leader__value">Gang 9</span></li>
+        </ul>
+      </article>
+
+      <article class="cx-sheet cx-sheet--phone">
+        <div class="cx-sheet__head"><span class="cx-eyebrow">Verlauf</span><span class="cx-meta">142 Einträge · Woche 6</span></div>
+        <ol class="cx-log">
+          <li class="cx-log__entry cx-log__entry--auto"><span class="cx-log__when">Tag 38<br>14:02</span><span class="cx-log__what">Gegossen · 6,6 L, mit Dünger <span class="cx-log__tag">automatisch</span></span></li>
+          <li class="cx-log__entry"><span class="cx-log__when">Tag 36<br>19:40</span><span class="cx-log__what">Entlaubt · Big Tent, unteres Drittel</span></li>
+          <li class="cx-log__entry cx-log__entry--auto"><span class="cx-log__when">Tag 35<br>03:15</span><span class="cx-log__what">Klima-Ausreißer · 74 min über Band <span class="cx-log__tag">automatisch</span></span></li>
+          <li class="cx-log__entry"><span class="cx-log__when">Tag 31<br>21:12</span><span class="cx-log__what">Trauermücken gesehen · Gelbtafeln gesetzt</span></li>
+        </ol>
+        <section class="cx-section">
+          <span class="cx-eyebrow">Eintragen</span>
+          <div class="cx-btn-grid">
+            <button class="cx-btn" type="button">Umtopfen</button><button class="cx-btn" type="button">LST</button>
+            <button class="cx-btn" type="button">Topping</button><button class="cx-btn" type="button">Entlauben</button>
+            <button class="cx-btn cx-btn--attention" type="button">Schädling</button><button class="cx-btn" type="button">Foto</button>
+          </div>
+          <p class="cx-note">Tap trägt sofort ein — Zelt, Tag, Woche und Phase kommen von selbst mit.</p>
+        </section>
+        <div class="cx-chips" role="group" aria-label="Filter">
+          <button class="cx-chip" type="button" aria-pressed="true">alle</button>
+          <button class="cx-chip" type="button" aria-pressed="false">Gießen</button>
+          <button class="cx-chip" type="button" aria-pressed="false">Training</button>
+          <button class="cx-chip" type="button" aria-pressed="false">Klima</button>
+        </div>
+        <div class="cx-field">
+          <label class="cx-field__label" for="note">Notiz</label>
+          <input class="cx-input" id="note" placeholder="optional, nach dem Tap">
+        </div>
+      </article>
+
+      <article class="cx-sheet cx-sheet--phone">
+        <div class="cx-sheet__head"><span class="cx-eyebrow">Plan</span><span class="cx-meta">Blüte · Woche 6 · Tag 38</span></div>
+        <div>
+          <div class="cx-display"><span class="cx-display__value">45</span><span class="cx-display__unit">Tage bis Ernte<br>voraussichtlich 11. Oktober</span></div>
+          <div class="cx-progress" style="--cx-value:.46;margin-top:14px" role="progressbar" aria-valuenow="46" aria-valuemin="0" aria-valuemax="100" aria-label="Fortschritt"></div>
+          <div class="cx-progress__scale"><span>Tag 1</span><span>46 %</span><span>Tag 83</span></div>
+        </div>
+        <section class="cx-section">
+          <span class="cx-eyebrow">Nächste Woche ändert sich</span>
+          <ul class="cx-leaders">
+            <li class="cx-leader"><span class="cx-leader__label">Lampenstufe</span><span class="cx-leader__value"><small>7 →</small> 8</span></li>
+            <li class="cx-leader"><span class="cx-leader__label">VPD-Zielband</span><span class="cx-leader__value"><small>1,0–1,3 →</small> 1,2–1,5</span></li>
+            <li class="cx-leader cx-leader--attention"><span class="cx-leader__label">Bio-Grow entfällt</span><span class="cx-leader__value"><small>26 ml →</small> 0</span></li>
+          </ul>
+        </section>
+        <div class="cx-callout cx-callout--attention">
+          <span class="cx-callout__title">Wechsel in die Spülphase in 38 Tagen</span>
+          <p class="cx-body">Bestätigen schreibt Lichtzeiten und Zielband. Ohne Bestätigung ändert sich nichts.</p>
+          <div class="cx-btn-row"><button class="cx-btn cx-btn--solid" type="button">Bestätigen</button><button class="cx-btn" type="button">Später</button></div>
+        </div>
+        <div class="cx-callout cx-callout--draft">
+          <p class="cx-body">Vorschau bei −28 Tagen: Woche 10, Lampenstufe 9. <span class="cx-attention">Erst nach Bestätigung geschrieben.</span></p>
+        </div>
+      </article>
+
+      <article class="cx-sheet cx-sheet--phone">
+        <div class="cx-sheet__head"><span class="cx-eyebrow">Farbschlüssel</span><span class="cx-meta">Streckung · Tag 38</span></div>
+        <p class="cx-note">Die Scheibe selbst wohnt seit 0.4.0 in <code>@rafime/wheel</code>.</p>
+        <section class="cx-section">
+          <span class="cx-eyebrow cx-eyebrow--accent">Bahn IV · BioBizz</span>
+          <ul class="cx-legend" id="legend"></ul>
+        </section>
+      </article>
+    </div>
+  </section>
+
+  <section>
+    <p class="caption"><b>ISO Coach</b> · dieselben Bausteine für ein Haltezeit-Messgerät (1b–1d), Farben aus <code>palettes/iso.css</code>.</p>
+    <div class="row">
+      <article class="cx-sheet cx-sheet--phone">
+        <div class="cx-sheet__head"><span class="cx-title cx-title--sm">Liegestütz · Knie</span><span class="cx-meta">Satz 2 von 3</span></div>
+        <svg class="cx-diagram ring" id="dial" viewBox="0 0 320 320" role="img" aria-label="41 Sekunden gehalten, Vorgabe 58 bis 70"></svg>
+        <button class="cx-btn cx-btn--lg cx-btn--block" type="button">Gehalten — Satz beenden</button>
+        <button class="cx-btn cx-btn--attention cx-btn--block" type="button">Abbruch wegen Schmerzen</button>
+        <p class="cx-note" style="text-align:center">Pause danach: 20 s. Der Abfall im nächsten Satz ist ein Messwert.</p>
+      </article>
+
+      <article class="cx-sheet cx-sheet--phone">
+        <h2 class="cx-title">Einmessen — Schulter</h2>
+        <p class="cx-subtitle">Drei Varianten, weit auseinander. Danach steht das Profil.</p>
+        <div class="cx-entry" style="--cx-spine:var(--iso-zone-capacity)">
+          <div class="cx-entry__head"><span>Wandliegestütz</span><span class="cx-meta">Ziel ~120 s</span></div>
+          <div class="cx-figure__value">122 s · 118 s</div>
+        </div>
+        <div class="cx-entry" style="--cx-spine:var(--iso-zone-tendon)">
+          <div class="cx-entry__head"><span>Liegestütz, Knie</span><span class="cx-meta">Ziel ~60 s</span></div>
+          <div class="cx-figure__value">63 s · 24 s</div>
+        </div>
+        <div class="cx-entry cx-entry--open" style="--cx-spine:var(--iso-zone-strength)">
+          <div class="cx-entry__head"><span>Liegestütz, normal</span><span class="cx-meta">Ziel ~25 s</span></div>
+          <div class="cx-btn-row"><span class="cx-slot"></span><span class="cx-slot"></span></div>
+        </div>
+        <button class="cx-btn cx-btn--lg cx-btn--block" type="button">Dritte Messung starten</button>
+      </article>
+
+      <article class="cx-sheet cx-sheet--phone">
+        <h2 class="cx-title">Session beendet</h2>
+        <p class="cx-meta" style="font-size:var(--cx-text-md)">Liegestütz, Knie · 3 Sätze · 2 min 14 s</p>
+        <table class="cx-table">
+          <tr><th>Satz</th><th>Zeit</th><th>Ergebnis</th></tr>
+          <tr><td>1</td><td>63 s</td><td>gehalten</td></tr>
+          <tr><td>2</td><td>24 s</td><td>gehalten</td></tr>
+          <tr><td>3</td><td>11 s</td><td class="cx-attention">Schmerz</td></tr>
+        </table>
+        <div class="cx-field">
+          <label class="cx-field__label" for="pain">Wie stark war der Schmerz heute? · <span id="painv">3</span></label>
+          <input class="cx-range" id="pain" type="range" min="0" max="10" value="3">
+        </div>
+        <button class="cx-btn cx-btn--solid cx-btn--lg cx-btn--block" type="button">Session speichern</button>
+        <p class="cx-marginal">Weil Satz 3 wegen Schmerzen endete, ist die Vorgabe für das nächste Mal 11 s — nicht mehr.</p>
+        <p class="cx-body"><span class="cx-struck">CMF</span> <span class="cx-muted">— verworfen, weil extrapoliert.</span></p>
+      </article>
+    </div>
+  </section>
+</div>
+
+<script type="module">
+  import { tokens, color, installInk, arcPath, labelArcPath, ringSegmentPath, polar, valueToAngle, inkSprite } from '../dist/index.js';
+
+  installInk();
+  const theme = () => (document.documentElement.dataset.theme === 'dark' ? 'dark' : 'paper');
+
+  function drawSwatches() {
+    const names = ['paper', 'ink', 'ink-line', ...Object.keys(tokens.themes.paper).filter((n) => !n.startsWith('paper') && !['ink', 'ink-line', 'on-ink', 'ground'].includes(n))];
+    document.getElementById('swatches').innerHTML = names.map((n) => `
+      <div class="sw"><i style="background:var(--cx-${n})"></i>
+      <span class="cx-body">${n}</span><span class="cx-meta cx-num">${color(n, theme())}</span></div>`).join('');
+  }
+
+  const scale = [['6xl', '38'], ['4xl', '1,18'], ['3xl', 'Heute: mit Dünger'], ['xl', 'Big Tent'], ['lg', 'Bio-Grow 26 ml, umrühren'], ['md', 'Zelt, absolut'], ['sm', 'Tap trägt sofort ein'], ['xs', 'Tag 38 · 14:02']];
+  document.getElementById('scale').innerHTML = scale.map(([k, t]) => `<div><code>text-${k}</code><span style="font-size:var(--cx-text-${k});line-height:1.1">${t}</span></div>`).join('');
+
+  const nutrients = [['bio-grow', 'Bio-Grow', 15, 49], ['bio-bloom', 'Bio-Bloom', 29, 77], ['top-max', 'Top-Max', 43, 77], ['alg-a-mic', 'Alg-A-Mic', 22, 70], ['bio-heaven', 'Bio-Heaven', 8, 77], ['acti-vera', 'Acti-Vera', 22, 63]];
+  const c = 160;
+  document.getElementById('legend').innerHTML = nutrients.map(([key, label, from, to]) =>
+    `<li class="cx-legend__item"><span class="cx-swatch" style="--cx-swatch:var(--grow-nutrient-${key})"></span><span>${label}</span><span class="cx-num">Tag ${from}–${to}</span></li>`).join('');
+
+  // ISO dial: 0–150 s over 270°, zones as outer bands, elapsed in amber
+  const sec = (s) => valueToAngle(s, 0, 150, -135, 270);
+  let dial = '';
+  [['strength', 20, 60, 'A · Kraft'], ['tendon', 60, 90, 'B · Sehne'], ['capacity', 90, 150, 'C · Kapazität']].forEach(([z, f, t, label], i) => {
+    dial += `<path d="${arcPath(c, c, 146, sec(f), sec(t))}" fill="none" stroke="var(--iso-zone-${z})" stroke-width="7" opacity=".55" class="cx-ink"/>`;
+    dial += `<path id="z${i}" d="${labelArcPath(c, c, 156, sec(f), sec(t))}" fill="none"/>`;
+    dial += `<text font-size="10" letter-spacing="1.2"><textPath href="#z${i}" startOffset="50%" text-anchor="middle">${label.toUpperCase()}</textPath></text>`;
+  });
+  dial += `<path d="${arcPath(c, c, 132, sec(0), sec(150))}" fill="none" stroke="currentColor" stroke-width=".8" opacity=".6" class="cx-ink"/>`;
+  dial += `<path d="${arcPath(c, c, 124, sec(0), sec(41))}" fill="none" stroke="var(--iso-elapsed)" stroke-width="8" stroke-linecap="round" class="cx-ink"/>`;
+  [0, 30, 60, 90, 120, 150].forEach((s) => { const p = polar(c, c, 110, sec(s)); dial += `<text x="${p.x}" y="${p.y + 4}" text-anchor="middle" font-size="12" opacity=".8">${s}</text>`; });
+  const t1 = polar(c, c, 118, sec(58)), t2 = polar(c, c, 140, sec(58));
+  dial += `<line x1="${t1.x}" y1="${t1.y}" x2="${t2.x}" y2="${t2.y}" stroke="var(--iso-target)" stroke-width="1.6" stroke-dasharray="3 2"/>`;
+  dial += `<text x="${c}" y="${c + 16}" text-anchor="middle" font-size="72">41</text>`;
+  dial += `<text x="${c}" y="${c + 40}" text-anchor="middle" font-size="13">Sekunden gehalten</text>`;
+  dial += `<text x="${c}" y="${c + 72}" text-anchor="middle" font-size="22" style="fill:var(--iso-target)">58–70 s</text>`;
+  document.getElementById('dial').innerHTML = dial;
+
+  const pain = document.getElementById('pain');
+  pain.addEventListener('input', () => { document.getElementById('painv').textContent = pain.value; });
+
+  document.addEventListener('click', (e) => {
+    const b = e.target.closest('[data-theme-set]');
+    if (b) {
+      document.documentElement.dataset.theme = b.dataset.themeSet;
+      document.querySelectorAll('[data-theme-set]').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+      drawSwatches();
+      return;
+    }
+    const chip = e.target.closest('.cx-chip:not([data-theme-set])');
+    if (chip) chip.parentElement.querySelectorAll('.cx-chip').forEach((x) => x.setAttribute('aria-pressed', String(x === chip)));
+  });
+  drawSwatches();
+</script>
+</body>
+</html>

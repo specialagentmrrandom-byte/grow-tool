@@ -59,11 +59,11 @@ describe('theme', () => {
 
         applyTheme('light');
         expect(document.documentElement.getAttribute('data-theme')).toBe('light');
-        expect(meta.getAttribute('content')).toBe('#f8f9fa');
+        expect(meta.getAttribute('content')).toBe('#dcd5ab');
         expect(getCurrentTheme()).toBe('light');
 
         applyTheme('dark');
-        expect(meta.getAttribute('content')).toBe('#0a0a0a');
+        expect(meta.getAttribute('content')).toBe('#1c1a10');
         expect(getCurrentTheme()).toBe('dark');
     });
 

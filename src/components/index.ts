@@ -13,3 +13,4 @@ export { QuickLogSheet } from './QuickLogSheet';
 export { ImageViewer } from './ImageViewer';
 export { TutorialOverlay } from './TutorialOverlay';
 export { AccountModal } from './AccountModal';
+export { GrowDisc } from './GrowDisc';

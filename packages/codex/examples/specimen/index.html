@@ -1,0 +1,253 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Codex Specimen</title>
+</head>
+<body>
+<div class="cx sp-page">
+  <header class="cx-sheet sp-hero">
+    <div class="cx-sheet__head">
+      <span class="cx-eyebrow">@rafime/codex 0.6</span>
+      <span class="cx-meta" id="sp-fontline">EB Garamond</span>
+    </div>
+    <h1 class="cx-title sp-h1">Codex Specimen</h1>
+    <p class="cx-subtitle">Iron-gall ink on laid paper. Every sheet below is the real CSS and JavaScript from the packages, not a picture of it. Switch the variant, the theme and the pen to see how an app changes.</p>
+
+    <div class="sp-controls">
+      <div class="sp-control">
+        <span class="cx-label">Variant</span>
+        <div class="cx-chips" role="group" aria-label="Variant" id="sp-variant">
+          <button class="cx-chip" type="button" data-variant="" aria-pressed="true">Notebook</button>
+          <button class="cx-chip" type="button" data-variant="tide" aria-pressed="false">Tide</button>
+          <button class="cx-chip" type="button" data-variant="compass" aria-pressed="false">Compass</button>
+          <button class="cx-chip" type="button" data-variant="grow" aria-pressed="false">Grow</button>
+          <button class="cx-chip" type="button" data-variant="atelier" aria-pressed="false">Atelier</button>
+        </div>
+      </div>
+      <div class="sp-control">
+        <span class="cx-label">Theme</span>
+        <div class="cx-chips" role="group" aria-label="Theme" id="sp-theme">
+          <button class="cx-chip" type="button" data-theme-set="" aria-pressed="true">System</button>
+          <button class="cx-chip" type="button" data-theme-set="light" aria-pressed="false"><i data-icon="sun"></i><span>Paper</span></button>
+          <button class="cx-chip" type="button" data-theme-set="dark" aria-pressed="false"><i data-icon="moon"></i><span>Night</span></button>
+        </div>
+      </div>
+      <div class="sp-control">
+        <span class="cx-label">Lines</span>
+        <div class="cx-chips" role="group" aria-label="Lines" id="sp-ink">
+          <button class="cx-chip" type="button" data-ink="pen" aria-pressed="true">Pen</button>
+          <button class="cx-chip" type="button" data-ink="on" aria-pressed="false">Filter</button>
+          <button class="cx-chip" type="button" data-ink="off" aria-pressed="false">Straight</button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <section class="cx-sheet sp-wide sp-pen" id="sp-pen" aria-labelledby="pen-h">
+    <div class="cx-sheet__head"><span class="cx-eyebrow cx-eyebrow--accent">codex/pen</span><span class="cx-meta cx-num" id="pen-seed">seed 1789</span></div>
+    <h2 class="cx-title" id="pen-h">Hatching and trembling</h2>
+    <p class="cx-subtitle sp-lede">Every edge and every shadow on this page is drawn by a seeded hand. Choose how the pen shades and how much the hand shakes, then reroll until the page looks like yours. The same seed always draws the same page.</p>
+    <div class="pen-block">
+      <span class="cx-label">Hatching</span>
+      <div class="pen-gallery" id="pen-hatch" role="group" aria-label="Hatching"></div>
+    </div>
+    <div class="pen-block">
+      <span class="cx-label">Trembling</span>
+      <div class="pen-gallery" id="pen-tremble" role="group" aria-label="Trembling"></div>
+    </div>
+    <div class="pen-sliders">
+      <div class="cx-field"><label class="cx-field__label" for="pen-amount">Shake · <span class="cx-num" id="pen-amount-v">1,00</span></label><input class="cx-range" id="pen-amount" type="range" min="0" max="3" step="0.05" value="1"></div>
+      <div class="cx-field"><label class="cx-field__label" for="pen-density">Density · <span class="cx-num" id="pen-density-v">1,00</span></label><input class="cx-range" id="pen-density" type="range" min="0.5" max="2.2" step="0.05" value="1"></div>
+      <div class="cx-field"><label class="cx-field__label" for="pen-angle">Angle · <span class="cx-num" id="pen-angle-v">−45°</span></label><input class="cx-range" id="pen-angle" type="range" min="-90" max="90" step="1" value="-45"></div>
+    </div>
+    <div class="cx-btn-row">
+      <button class="cx-btn cx-btn--solid" type="button" id="pen-reroll"><i data-icon="sync"></i><span>Reroll</span></button>
+      <button class="cx-btn" type="button" id="pen-surprise"><i data-icon="sparkle"></i><span>Surprise me</span></button>
+      <button class="cx-btn" type="button" id="pen-boil" aria-pressed="false"><i data-icon="play"></i><span>Boil</span></button>
+      <button class="cx-btn cx-btn--quiet" type="button" id="pen-reset"><i data-icon="undo"></i><span>Reset</span></button>
+    </div>
+    <pre class="pen-code"><code id="pen-code"></code></pre>
+    <p class="cx-note">Boil redraws every line seven times a second from three seeds, the way hand-drawn animation keeps its outlines alive. “Mixed” lets each element roll its own style.</p>
+  </section>
+
+  <div class="sp-grid">
+    <!-- 3 · the answer -->
+    <article class="cx-sheet cx-sheet--phone">
+      <div class="cx-sheet__head"><span class="cx-eyebrow">The answer on top</span><span class="cx-meta">cx-display · cx-progress · cx-leaders</span></div>
+      <div class="cx-display">
+        <span class="cx-display__value cx-num">7,4</span>
+        <span class="cx-display__unit">hours of sleep<br>average of the last 7 nights</span>
+      </div>
+      <div class="cx-progress" style="--cx-value:.62" role="progressbar" aria-valuenow="62" aria-valuemin="0" aria-valuemax="100" aria-label="Goal progress"></div>
+      <div class="cx-progress__scale"><span>0 h</span><span>goal 8 h</span><span>12 h</span></div>
+      <section class="cx-section">
+        <span class="cx-eyebrow">This week</span>
+        <ul class="cx-leaders">
+          <li class="cx-leader"><span class="cx-leader__label">Check-ins</span><span class="cx-leader__value cx-num">6 of 7</span></li>
+          <li class="cx-leader"><span class="cx-leader__label">Longest streak</span><span class="cx-leader__value cx-num">12 days</span></li>
+          <li class="cx-leader cx-leader--muted"><span class="cx-leader__label">Steps</span><span class="cx-leader__value">no sensor</span></li>
+          <li class="cx-leader cx-leader--attention"><span class="cx-leader__label">Bedtime drift</span><span class="cx-leader__value cx-num">+48 min</span></li>
+        </ul>
+      </section>
+      <button class="cx-btn cx-btn--solid cx-btn--block" type="button"><i data-icon="plus"></i><span>Add check-in</span></button>
+    </article>
+
+    <!-- 4 · buttons -->
+    <article class="cx-sheet cx-sheet--phone">
+      <div class="cx-sheet__head"><span class="cx-eyebrow">Buttons and chips</span><span class="cx-meta">cx-btn · cx-chip · cx-hatched</span></div>
+      <button class="cx-btn cx-btn--solid cx-btn--lg cx-btn--block" type="button">Start the evening routine<span class="cx-btn__sub">the one filled target on this sheet</span></button>
+      <div class="cx-btn-row">
+        <button class="cx-btn" type="button"><i data-icon="download"></i><span>Export</span></button>
+        <button class="cx-btn cx-btn--attention" type="button"><i data-icon="trash"></i><span>Delete</span></button>
+        <button class="cx-btn cx-btn--quiet" type="button">Later</button>
+        <button class="cx-btn" type="button" disabled>Locked</button>
+      </div>
+      <div class="cx-btn-grid">
+        <button class="cx-btn" type="button"><i data-icon="note"></i><span>Note</span></button>
+        <button class="cx-btn" type="button"><i data-icon="pill"></i><span>Meds</span></button>
+        <button class="cx-btn" type="button"><i data-icon="bolt"></i><span>Energy</span></button>
+        <button class="cx-btn sp-custom" type="button"><i data-icon="heart"></i><span>Self-care</span></button>
+      </div>
+      <section class="cx-section">
+        <span class="cx-eyebrow">Filter</span>
+        <div class="cx-chips sp-toggle" role="group" aria-label="Filter">
+          <button class="cx-chip" type="button" aria-pressed="true">all</button>
+          <button class="cx-chip" type="button" aria-pressed="false">sleep</button>
+          <button class="cx-chip" type="button" aria-pressed="false">mood</button>
+          <button class="cx-chip" type="button" aria-pressed="false">notes</button>
+        </div>
+        <div class="cx-chips"><span class="cx-chip">a label, not clickable</span></div>
+      </section>
+      <p class="cx-note">“Self-care” is coloured with <code>--cx-fill</code>, <code>--cx-edge</code> and <code>--cx-hatch</code>, never with <code>background</code>.</p>
+    </article>
+
+    <!-- status -->
+    <article class="cx-sheet cx-sheet--phone">
+      <div class="cx-sheet__head"><span class="cx-eyebrow">Status and figures</span><span class="cx-meta">cx-band · cx-figures · cx-tile</span></div>
+      <div class="cx-band cx-band--ok">
+        <div class="cx-band__head"><span>Bedroom</span><span class="cx-band__status">in range</span></div>
+        <div class="cx-band__value">18,5 ° <small>target 17–19 °</small></div>
+      </div>
+      <div class="cx-band cx-band--offline">
+        <div class="cx-band__head"><span>Living room</span><span class="cx-band__status">sensor gone</span></div>
+        <div class="cx-band__value">— <small>last seen 3 h ago</small></div>
+      </div>
+      <div class="cx-band cx-band--attention">
+        <div class="cx-band__head"><span>Humidity</span><span class="cx-band__status">act now</span></div>
+        <div class="cx-band__value">71 % <small>ventilate for 10 min</small></div>
+      </div>
+      <div class="cx-figures">
+        <div class="cx-figure cx-figure--target"><span class="cx-figure__value cx-num">8,0 h</span><span class="cx-label">target</span></div>
+        <div class="cx-figure"><span class="cx-figure__value cx-num">7,4 h</span><span class="cx-label">now</span></div>
+      </div>
+      <div class="cx-figures">
+        <div class="cx-tile cx-figure"><span class="cx-figure__value cx-num">23:40</span><span class="cx-figure__label">asleep</span></div>
+        <div class="cx-tile cx-figure"><span class="cx-figure__value cx-num">07:05</span><span class="cx-figure__label">awake</span></div>
+      </div>
+    </article>
+
+    <!-- 5 · forms -->
+    <article class="cx-sheet cx-sheet--phone">
+      <div class="cx-sheet__head"><span class="cx-eyebrow">Forms</span><span class="cx-meta">cx-field · cx-input · cx-range</span></div>
+      <h2 class="cx-title cx-title--sm">Evening check-in</h2>
+      <div class="cx-field">
+        <label class="cx-field__label" for="sp-mood">Mood · <span id="sp-mood-v" class="cx-num">+1</span></label>
+        <input class="cx-range" id="sp-mood" type="range" min="-3" max="3" value="1">
+      </div>
+      <div class="cx-field">
+        <label class="cx-field__label" for="sp-note">Note</label>
+        <input class="cx-input" id="sp-note" placeholder="optional">
+        <span class="cx-field__hint">Only you can read this.</span>
+      </div>
+      <div class="cx-field cx-field--error">
+        <label class="cx-field__label" for="sp-hours">Hours slept</label>
+        <input class="cx-input cx-num" id="sp-hours" inputmode="decimal" value="25">
+        <span class="cx-field__hint">Between 0 and 24.</span>
+      </div>
+      <div class="cx-btn-row">
+        <button class="cx-btn cx-btn--solid" type="button"><i data-icon="check"></i><span>Save</span></button>
+        <button class="cx-btn cx-btn--quiet" type="button">Cancel</button>
+      </div>
+    </article>
+
+    <!-- callouts, steps -->
+    <article class="cx-sheet cx-sheet--phone">
+      <div class="cx-sheet__head"><span class="cx-eyebrow">Decisions and steps</span><span class="cx-meta">cx-callout · cx-steps · cx-marginal</span></div>
+      <div class="cx-callout cx-callout--attention">
+        <span class="cx-callout__title">Move bedtime to 23:00?</span>
+        <p class="cx-body">Confirming changes the reminder. Without it nothing changes.</p>
+        <div class="cx-btn-row"><button class="cx-btn cx-btn--solid" type="button">Confirm</button><button class="cx-btn" type="button">Later</button></div>
+      </div>
+      <div class="cx-callout cx-callout--draft">
+        <p class="cx-body">Preview for next week: reminder at 22:30. <span class="cx-attention">Only written after you confirm.</span></p>
+      </div>
+      <section class="cx-section">
+        <span class="cx-eyebrow">Evening routine</span>
+        <ol class="cx-steps">
+          <li class="is-done">Lights down</li>
+          <li class="is-done">Phone in the other room</li>
+          <li>Ten pages of a book</li>
+        </ol>
+      </section>
+      <p class="cx-marginal">Step III was skipped four times this week, so the routine starts ten minutes earlier.</p>
+      <p class="cx-body"><span class="cx-struck">Melatonin</span> <span class="cx-muted">– dropped after two weeks.</span></p>
+    </article>
+
+    <!-- journal -->
+    <article class="cx-sheet cx-sheet--phone">
+      <div class="cx-sheet__head"><span class="cx-eyebrow">Journal</span><span class="cx-meta">cx-log · cx-entry · cx-table</span></div>
+      <ol class="cx-log">
+        <li class="cx-log__entry"><span class="cx-log__when">Thu<br>21:40</span><span class="cx-log__what">Walked by the river, felt lighter afterwards.</span></li>
+        <li class="cx-log__entry cx-log__entry--auto"><span class="cx-log__when">Thu<br>07:05</span><span class="cx-log__what">Sleep imported · 7 h 25 min <span class="cx-log__tag">automatic</span></span></li>
+        <li class="cx-log__entry"><span class="cx-log__when">Wed<br>22:10</span><span class="cx-log__what">Hard meeting. Wrote it down, let it go.</span></li>
+      </ol>
+      <div class="cx-entry" style="--cx-spine:var(--tide-mood-high)">
+        <div class="cx-entry__head"><span>Morning mood</span><span class="cx-meta">7 days</span></div>
+        <div class="cx-figure__value cx-num">+1,3</div>
+      </div>
+      <div class="cx-entry cx-entry--open" style="--cx-spine:var(--tide-sleep)">
+        <div class="cx-entry__head"><span>Nap</span><span class="cx-meta">not yet today</span></div>
+        <div class="cx-btn-row"><span class="cx-slot"></span><span class="cx-slot"></span></div>
+      </div>
+      <table class="cx-table">
+        <tr><th>Night</th><th>Asleep</th><th>Hours</th></tr>
+        <tr><td>Mon</td><td class="cx-num">23:10</td><td class="cx-num">7,6</td></tr>
+        <tr><td>Tue</td><td class="cx-num">00:25</td><td class="cx-num cx-attention">5,9</td></tr>
+        <tr><td>Wed</td><td class="cx-num">23:30</td><td class="cx-num">7,4</td></tr>
+      </table>
+    </article>
+
+    <!-- 10 · dial -->
+    <article class="cx-sheet cx-sheet--phone">
+      <div class="cx-sheet__head"><span class="cx-eyebrow">A dial with the ink helpers</span><span class="cx-meta">arcPath · labelArcPath · polar</span></div>
+      <svg class="cx-diagram sp-dial" id="sp-dial" viewBox="0 0 320 320" role="img" aria-label="7,4 hours slept, target 7 to 9 hours"></svg>
+      <ul class="cx-legend">
+        <li class="cx-legend__item"><span class="cx-swatch" style="--cx-swatch:var(--cx-rust)"></span><span>too short</span><span class="cx-num">0–6 h</span></li>
+        <li class="cx-legend__item"><span class="cx-swatch" style="--cx-swatch:var(--cx-moss)"></span><span>in range</span><span class="cx-num">7–9 h</span></li>
+        <li class="cx-legend__item"><span class="cx-swatch" style="--cx-swatch:var(--cx-slate)"></span><span>long</span><span class="cx-num">9–12 h</span></li>
+      </ul>
+    </article>
+  </div>
+
+  <!-- tokens -->
+  <section class="cx-sheet sp-wide">
+    <div class="cx-sheet__head"><span class="cx-eyebrow">Paper, ink and pigments</span><span class="cx-meta" id="sp-sw-meta">color(name, theme, variant)</span></div>
+    <div class="sp-swatches" id="sp-swatches"></div>
+    <section class="cx-section">
+      <span class="cx-eyebrow">Type scale</span>
+      <div class="sp-scale" id="sp-scale"></div>
+    </section>
+  </section>
+
+  <section class="cx-sheet sp-wide">
+    <div class="cx-sheet__head"><span class="cx-eyebrow">Icons</span><span class="cx-meta" id="sp-icon-meta">icon(name)</span></div>
+    <div class="sp-icons" id="sp-icons"></div>
+  </section>
+
+  <footer class="sp-foot cx-note">Built from <code>@rafime/codex</code>. The journal wheel has its own page in <code>@rafime/wheel</code>. All sample data is made up.</footer>
+</div>
+  <script type="module" src="./main.js"></script>
+</body>
+</html>

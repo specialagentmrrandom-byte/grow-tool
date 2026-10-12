@@ -1,0 +1,111 @@
+{
+  "name": "@rafime/codex",
+  "version": "0.5.0",
+  "description": "Codex — the shared design system of Rafime's apps (Grow Journal, Tide, ISO Coach): iron-gall ink on laid paper, EB Garamond, instruments instead of interfaces. Framework-free CSS tokens and components plus small SVG helpers.",
+  "type": "module",
+  "license": "MIT",
+  "author": "Rafime (Left4Dev)",
+  "keywords": [
+    "design-system",
+    "design-tokens",
+    "css",
+    "eb-garamond",
+    "codex",
+    "grow-journal",
+    "iso-coach"
+  ],
+  "sideEffects": [
+    "*.css"
+  ],
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./tokens": {
+      "types": "./dist/tokens.d.ts",
+      "default": "./dist/tokens.js"
+    },
+    "./ink": {
+      "types": "./dist/ink.d.ts",
+      "default": "./dist/ink.js"
+    },
+    "./icons": {
+      "types": "./dist/icons.d.ts",
+      "default": "./dist/icons.js"
+    },
+    "./compile": {
+      "types": "./dist/compile.d.ts",
+      "default": "./dist/compile.js"
+    },
+    "./pen": {
+      "types": "./dist/pen.d.ts",
+      "default": "./dist/pen.js"
+    },
+    "./pen.css": {
+      "types": "./dist/css.d.ts",
+      "default": "./dist/pen.css"
+    },
+    "./tokens.json": "./dist/tokens.json",
+    "./all.css": {
+      "types": "./dist/css.d.ts",
+      "default": "./dist/all.css"
+    },
+    "./codex.css": {
+      "types": "./dist/css.d.ts",
+      "default": "./dist/codex.css"
+    },
+    "./tokens.css": {
+      "types": "./dist/css.d.ts",
+      "default": "./dist/tokens.css"
+    },
+    "./components.css": {
+      "types": "./dist/css.d.ts",
+      "default": "./dist/components.css"
+    },
+    "./base.css": {
+      "types": "./dist/css.d.ts",
+      "default": "./dist/base.css"
+    },
+    "./fonts.css": {
+      "types": "./dist/css.d.ts",
+      "default": "./dist/fonts.css"
+    },
+    "./palettes/*.css": {
+      "types": "./dist/css.d.ts",
+      "default": "./dist/palettes/*.css"
+    },
+    "./fonts/*": "./dist/fonts/*",
+    "./package.json": "./package.json",
+    "./variants/*.css": {
+      "types": "./dist/css.d.ts",
+      "default": "./dist/variants/*.css"
+    },
+    "./typefaces/*.css": {
+      "types": "./dist/css.d.ts",
+      "default": "./dist/typefaces/*.css"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "CHANGELOG.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "check": "node scripts/build.mjs --check",
+    "test": "node --test test/*.test.mjs",
+    "preview": "node scripts/preview.mjs",
+    "prepublishOnly": "npm run build && npm test",
+    "example": "vite examples/specimen"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

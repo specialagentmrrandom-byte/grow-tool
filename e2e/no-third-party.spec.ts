@@ -1,4 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
+import { viteEnv } from './helpers';
 
 /**
  * Nothing about a grower's visit may reach a third party: no CDN for the emoji,
@@ -7,8 +8,12 @@ import { test, expect, type Page } from '@playwright/test';
  */
 const PAGES = ['/', '/app.html', '/help.html'];
 
-/** The app's own backend is allowed to be external; nothing else is. */
-const BACKEND = process.env.VITE_SUPABASE_URL ? new URL(process.env.VITE_SUPABASE_URL).host : '';
+/**
+ * The app's own backend is allowed to be external; nothing else is. Read the
+ * way the dev server reads it (.env files included), not only from the shell.
+ */
+const SUPABASE_URL = viteEnv().VITE_SUPABASE_URL ?? '';
+const BACKEND = SUPABASE_URL ? new URL(SUPABASE_URL).host : '';
 
 function recordRequests(page: Page): string[] {
     const foreign: string[] = [];
