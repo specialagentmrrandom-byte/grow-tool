@@ -12,7 +12,7 @@ Part of the [Overgrow](https://overgrow.com) growing community.
 
 ## About this repository
 
-This is the **public source** of OG Grow Journal Assistant: the app, its assets and its tests. It is updated automatically whenever the app changes, so what you see here is what runs on [grow.rafime.de](https://grow.rafime.de). The first version of the app stays available at [classic.grow.rafime.de](https://classic.grow.rafime.de) (tag `v1`).
+This is the **public source** of OG Grow Journal Assistant: the app, its assets and its tests. It is updated automatically whenever the app changes, so what you see here is what runs on [grow.rafime.de](https://grow.rafime.de). The first version of the app stays available as **Grow Classic** at [grow.classic.rafime.de](https://grow.classic.rafime.de/app.html); its source is the tag [`v1`](https://github.com/specialagentmrrandom-byte/grow-tool/tree/v1) in this repository.
 
 It is a working copy, not just a read-only dump — clone it and it runs:
 
